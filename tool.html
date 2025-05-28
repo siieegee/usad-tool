@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>USAD - Tool</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 10px;
+      width: 80%;
+      max-width: 500px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    .modal h3 {
+      margin-bottom: 10px;
+    }
+
+    .modal ul {
+      text-align: left;
+    }
+
+    .close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="container">
+      <h1 class="logo">USAD</h1>
+      <nav>
+        <a href="home.html">Home</a>
+        <a href="tool.html">Tool</a>
+        <a href="about.html">About Us</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="tool-section">
+    <div class="container">
+      <h2>Product Review Detection</h2>
+      <p>Enter a product review below to check if it might be fraudulent using our unsupervised anomaly detection tool.</p>
+
+      <form class="tool-form" onsubmit="handleSubmit(event)">
+        <textarea 
+          name="review" 
+          rows="6" 
+          placeholder="Type or paste your product review here..." 
+          required
+        ></textarea>
+        <br />
+        <button type="submit" class="btn">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Custom Pop-up Modal -->
+  <div id="resultModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h3>Possible Fraudulent Indicators</h3>
+      <ul>
+        <li><strong>This is only used as placeholder. </strong> This is only used as placeholder. </li>
+        <li><strong>This is only used as placeholder. </strong> This is only used as placeholder. </li>
+        <li><strong>This is only used as placeholder. </strong> This is only used as placeholder. </li>
+      </ul>
+      </ul>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    function handleSubmit(event) {
+      event.preventDefault(); // Prevent real form submission
+      document.getElementById("resultModal").style.display = "block";
+    }
+
+    function closeModal() {
+      document.getElementById("resultModal").style.display = "none";
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById("resultModal");
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
+  </script>
+</body>
+</html>
