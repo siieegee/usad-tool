@@ -121,7 +121,7 @@
   </div>
 </div>
 
-  <!-- Smooth Scroll & Modal Script -->
+  <!-- Result Modal Box Script -->
  <script>
   const modal = document.getElementById('result-modal');
   const submitBtn = document.getElementById('submit-btn');
@@ -130,7 +130,6 @@
     modal.classList.add('show');
   });
 
-  // Close modal when clicking outside the modal content
   modal.addEventListener('click', (event) => {
     if (event.target === modal) {
       modal.classList.remove('show');

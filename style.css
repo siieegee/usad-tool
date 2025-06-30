@@ -93,9 +93,9 @@ nav {
   background: var(--primary-color);
   color: #fff;
   border: none;
-  padding: 20px 50px;       /* Bigger padding = bigger button */
-  border-radius: 999px;     /* Fully rounded pill-style */
-  font-size: 1.25rem;       /* Bigger text */
+  padding: 20px 50px;
+  border-radius: 999px;
+  font-size: 1.25rem;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.3s, transform 0.2s;
@@ -108,7 +108,7 @@ nav {
 /* Features Section */
 #features {
   background: #EBEDEF;
-  padding: 80px 0 180px; /* top padding reduced */
+  padding: 80px 0 180px;
   text-align: center;
   opacity: 0;
   animation: fadeInUp 0.8s ease forwards;
@@ -156,7 +156,7 @@ nav {
   padding: 50px;
   border-radius: var(--radius);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  max-width: 1400px; /* was 900px */
+  max-width: 1400px;
   margin: 0 auto;
   text-align: center;
 }
@@ -184,8 +184,6 @@ nav {
 .tool-box button {
   font-size: 1.2rem;
 }
-
-
 
 /* About Section */
 #about {
@@ -228,7 +226,7 @@ nav {
 .team-cards .card {
   background: var(--card-bg);
   border-radius: var(--radius);
-  padding: 40px 30px; /* more padding */
+  padding: 40px 30px;
   text-align: center;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   transition: transform 0.3s, box-shadow 0.3s;
