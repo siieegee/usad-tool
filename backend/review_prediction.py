@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ### Load pre-trained objects using absolute paths
 vectorizer = joblib.load(os.path.join(BASE_DIR, "tfidf_vectorizer.pkl"))  # Fitted TF-IDF vectorizer
 kmeans_final = joblib.load(os.path.join(BASE_DIR, "kmeans_model.pkl"))    # Fitted MiniBatchKMeans model
-threshold = 11.5 
+threshold = 11.5
 
 # threshold = joblib.load(os.path.join(BASE_DIR, "anomaly_distance_threshold.pkl"))  # Threshold for anomaly detection
 
@@ -30,13 +30,6 @@ lemmatizer = WordNetLemmatizer()
 
 ### Preprocessing function
 def preprocess_review(review_text):
-    """
-    Cleans and preprocesses the input review text by:
-    1. Lowercasing
-    2. Removing non-alphabetic characters
-    3. Removing stopwords
-    4. Lemmatizing words
-    """
     review_text_cleaned = review_text.lower()
     review_text_cleaned = re.sub(r'[^a-z\s]', '', review_text_cleaned)
 
