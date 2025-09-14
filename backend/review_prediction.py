@@ -20,7 +20,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ### Load pre-trained objects using absolute paths
 vectorizer = joblib.load(os.path.join(BASE_DIR, "tfidf_vectorizer.pkl"))  # Fitted TF-IDF vectorizer
 kmeans_final = joblib.load(os.path.join(BASE_DIR, "kmeans_model.pkl"))    # Fitted MiniBatchKMeans model
-threshold = joblib.load(os.path.join(BASE_DIR, "anomaly_distance_threshold.pkl"))  # Threshold for anomaly detection
+threshold = 11.5 
+
+# threshold = joblib.load(os.path.join(BASE_DIR, "anomaly_distance_threshold.pkl"))  # Threshold for anomaly detection
 
 # Initialize stopwords and lemmatizer
 stop_words = set(stopwords.words('english'))
@@ -69,7 +71,7 @@ def predict_review(review_text):
     distance = euclidean(final_features.toarray().ravel(), centroid)
     
     # Step 7: Compare with threshold to determine if anomalous
-    is_anomalous = distance > threshold
+    is_anomalous = distance > threshold  # Changed back to '>' since higher distances are more suspicious
     review_type = 'Anomalous' if is_anomalous else 'Normal'
     
     return {
