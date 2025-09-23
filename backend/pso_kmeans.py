@@ -5,38 +5,33 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from scipy import sparse
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import euclidean_distances
 import joblib
-from scipy.spatial.distance import euclidean
 
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
-from sklearn.model_selection import train_test_split
 
 from pyswarm import pso
 
-# Ignore warnings
 import warnings
 warnings.filterwarnings('ignore')
 
-### Load Saved Feature Matrix
-final_features = sparse.load_npz("final_features_sparse.npz")
-print("Loaded feature matrix shape:", final_features.shape)
+# -------------------------
+# Load Pre-split Features & Data
+# -------------------------
+train_features = sparse.load_npz("X_train.npz")
+test_features = sparse.load_npz("X_test.npz")
 
-# Load original dataset to map cluster labels back to reviews
-df = pd.read_csv("processed_reviews.csv")
-print("Dataset shape:", df.shape)
-
-### 70/30 Train-Test Split
-train_features, test_features, train_df, test_df = train_test_split(
-    final_features, df, test_size=0.3, random_state=42, shuffle=True
-)
+train_df = pd.read_csv("train_data.csv")
+test_df = pd.read_csv("test_data.csv")
 
 print(f"Training set shape: {train_features.shape}")
 print(f"Test set shape: {test_features.shape}")
 
-### PCA Visualization (Training Set)
+# -------------------------
+# PCA Visualization (Training Set)
+# -------------------------
 sample_size = 5000
 if train_features.shape[0] > sample_size:
     sampled_indices = np.random.choice(train_features.shape[0], sample_size, replace=False)
@@ -49,22 +44,29 @@ else:
 pca = PCA(n_components=2)
 features_2d_train = pca.fit_transform(sampled_features)
 
-plt.figure(figsize=(8,6))
-sns.scatterplot(x=features_2d_train[:,0], y=features_2d_train[:,1], alpha=0.5)
+plt.figure(figsize=(8, 6))
+sns.scatterplot(x=features_2d_train[:, 0], y=features_2d_train[:, 1], alpha=0.5)
 plt.title("PCA Visualization of Sampled Training Reviews")
 plt.xlabel("PC1")
 plt.ylabel("PC2")
 plt.show()
 
-### PSO to Find Optimal Number of Clusters (Training Set)
+# -------------------------
+# PSO to Find Optimal k
+# -------------------------
+# Precompute a fixed sample subset to stabilize silhouette score
+silhouette_sample_indices = (
+    np.random.choice(train_features.shape[0], min(5000, train_features.shape[0]), replace=False)
+)
+
 def objective_function(k):
     k = int(k[0])
-    if k < 2: return 999999
+    if k < 2:
+        return 999999
     km = MiniBatchKMeans(n_clusters=k, random_state=42, batch_size=2048)
     km.fit(train_features)
-    sample_size = min(5000, train_features.shape[0])
-    sample_indices = np.random.choice(train_features.shape[0], sample_size, replace=False)
-    score = silhouette_score(train_features[sample_indices], km.labels_[sample_indices])
+    score = silhouette_score(train_features[silhouette_sample_indices],
+                            km.labels_[silhouette_sample_indices])
     return -score
 
 lb, ub = [2], [10]
@@ -72,30 +74,32 @@ best_k, best_score = pso(objective_function, lb, ub, swarmsize=10, maxiter=5)
 best_k = int(best_k[0])
 print(f"Optimal k: {best_k}, silhouette score: {-best_score:.4f}")
 
-### Final KMeans Clustering (Training Set)
+# -------------------------
+# Final KMeans Clustering
+# -------------------------
 kmeans_final = MiniBatchKMeans(n_clusters=best_k, random_state=42, batch_size=2048, max_iter=100)
 kmeans_final.fit(train_features)
 train_df['cluster'] = kmeans_final.labels_
 
-### Distance-based Anomaly Detection (Training Set)
-distances_train = []
-for i in range(train_features.shape[0]):
-    cluster = train_df.iloc[i]['cluster']
-    centroid = kmeans_final.cluster_centers_[cluster]
-    dist = euclidean(train_features[i].toarray().ravel(), centroid)
-    distances_train.append(dist)
+# -------------------------
+# Distance-based Anomaly Detection (Training Set)
+# -------------------------
+distances_train_matrix = euclidean_distances(train_features, kmeans_final.cluster_centers_)
+min_distances_train = distances_train_matrix[np.arange(train_features.shape[0]), train_df['cluster']]
+train_df['distance_to_centroid'] = min_distances_train
 
-train_df['distance_to_centroid'] = distances_train
-threshold = np.percentile(distances_train, 95)  # 95th percentile threshold
-train_df['review_type'] = train_df['distance_to_centroid'].apply(lambda x: 'Anomalous' if x > threshold else 'Normal')
+threshold = np.percentile(min_distances_train, 95)  # 95th percentile
+train_df['review_type'] = np.where(train_df['distance_to_centroid'] > threshold, "Anomalous", "Normal")
 
-### Visualize PCA with Anomalies (Training Set)
-plt.figure(figsize=(8,6))
+# -------------------------
+# Visualize PCA with Anomalies
+# -------------------------
+plt.figure(figsize=(8, 6))
 sns.scatterplot(
-    x=features_2d_train[:,0],
-    y=features_2d_train[:,1],
+    x=features_2d_train[:, 0],
+    y=features_2d_train[:, 1],
     hue=train_df['review_type'].iloc[sampled_indices],
-    palette=['green','red'],
+    palette=['green', 'red'],
     alpha=0.6
 )
 plt.title("PCA Visualization with Anomalies Highlighted (Training Set)")
@@ -103,24 +107,17 @@ plt.xlabel("PC1")
 plt.ylabel("PC2")
 plt.show()
 
-## --- Evaluation on Test Set ---
+# -------------------------
+# Evaluation on Test Set
+# -------------------------
+test_df['cluster'] = kmeans_final.predict(test_features)
 
-### Assign clusters to test set
-test_clusters = kmeans_final.predict(test_features)
-test_df['cluster'] = test_clusters
+distances_test_matrix = euclidean_distances(test_features, kmeans_final.cluster_centers_)
+min_distances_test = distances_test_matrix[np.arange(test_features.shape[0]), test_df['cluster']]
+test_df['distance_to_centroid'] = min_distances_test
+test_df['review_type'] = np.where(test_df['distance_to_centroid'] > threshold, "Anomalous", "Normal")
 
-### Compute distances from test points to cluster centroids
-distances_test = []
-for i in range(test_features.shape[0]):
-    cluster = test_df.iloc[i]['cluster']
-    centroid = kmeans_final.cluster_centers_[cluster]
-    dist = euclidean(test_features[i].toarray().ravel(), centroid)
-    distances_test.append(dist)
-
-test_df['distance_to_centroid'] = distances_test
-test_df['review_type'] = test_df['distance_to_centroid'].apply(lambda x: 'Anomalous' if x > threshold else 'Normal')
-
-### PCA Visualization (Test Set)
+# PCA Visualization (Test Set)
 if test_features.shape[0] > sample_size:
     sampled_indices_test = np.random.choice(test_features.shape[0], sample_size, replace=False)
     sampled_features_test = test_features[sampled_indices_test].toarray()
@@ -131,12 +128,12 @@ else:
 
 features_2d_test = pca.transform(sampled_features_test)
 
-plt.figure(figsize=(8,6))
+plt.figure(figsize=(8, 6))
 sns.scatterplot(
-    x=features_2d_test[:,0],
-    y=features_2d_test[:,1],
+    x=features_2d_test[:, 0],
+    y=features_2d_test[:, 1],
     hue=sampled_test_df['review_type'],
-    palette=['green','red'],
+    palette=['green', 'red'],
     alpha=0.6
 )
 plt.title("PCA Visualization with Anomalies Highlighted (Test Set)")
@@ -144,16 +141,18 @@ plt.xlabel("PC1")
 plt.ylabel("PC2")
 plt.show()
 
-### Extract Top Keywords per Cluster (Using Training Set)
+# -------------------------
+# Extract Top Keywords per Cluster (Using Training Set)
+# -------------------------
 train_df['Review_Text_joined'] = train_df['processed_review'].apply(
-    lambda tokens: ' '.join(eval(tokens)) if isinstance(tokens, str) else ' '.join(tokens)
+    lambda tokens: ' '.join(tokens) if isinstance(tokens, list) else str(tokens)
 )
 
-vectorizer = TfidfVectorizer()
-vectorizer.fit(train_df['Review_Text_joined'])
+vectorizer = joblib.load("tfidf_vectorizer.pkl")
 feature_names = vectorizer.get_feature_names_out()
 
-centroids = kmeans_final.cluster_centers_
+# Slice centroids to exclude review_length feature
+centroids = kmeans_final.cluster_centers_[:, :len(feature_names)]
 
 def get_top_keywords_per_cluster(centroids, feature_names, n=10):
     top_keywords = {}
@@ -176,12 +175,13 @@ cluster_summary = pd.DataFrame({
 print("\nCluster Summary:")
 print(cluster_summary)
 
-### Save Results
+# -------------------------
+# Save Results & Models
+# -------------------------
 train_df.to_csv("clustered_reviews_train.csv", index=False)
 test_df.to_csv("clustered_reviews_test.csv", index=False)
-print("Clustered datasets saved to clustered_reviews_train.csv and clustered_reviews_test.csv")
+print("Clustered datasets saved.")
 
-### Save Models for Prediction
 joblib.dump(kmeans_final, "kmeans_model.pkl")
 joblib.dump(threshold, "anomaly_distance_threshold.pkl")
-print("Models saved successfully for prediction!")
+print("Models saved successfully!")

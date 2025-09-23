@@ -29,6 +29,7 @@ kmeans_final = joblib.load(os.path.join(BASE_DIR, "kmeans_model.pkl"))
 scaler = joblib.load(os.path.join(BASE_DIR, "review_length_scaler.pkl"))
 threshold = joblib.load(os.path.join(BASE_DIR, "anomaly_distance_threshold.pkl"))
 
+
 # Initialize stopwords and lemmatizer
 stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
