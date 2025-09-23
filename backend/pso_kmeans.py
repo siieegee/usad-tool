@@ -54,12 +54,11 @@ plt.show()
 # -------------------------
 # PSO to Find Optimal k
 # -------------------------
-# Precompute a fixed sample subset to stabilize silhouette score
 silhouette_sample_indices = (
     np.random.choice(train_features.shape[0], min(5000, train_features.shape[0]), replace=False)
 )
 
-def objective_function(k):
+def k_objective_function(k):
     k = int(k[0])
     if k < 2:
         return 999999
@@ -67,17 +66,54 @@ def objective_function(k):
     km.fit(train_features)
     score = silhouette_score(train_features[silhouette_sample_indices],
                             km.labels_[silhouette_sample_indices])
-    return -score
+    return -score  # PSO minimizes, so negate
 
 lb, ub = [2], [10]
-best_k, best_score = pso(objective_function, lb, ub, swarmsize=10, maxiter=5)
+best_k, best_score = pso(k_objective_function, lb, ub, swarmsize=10, maxiter=5)
 best_k = int(best_k[0])
 print(f"Optimal k: {best_k}, silhouette score: {-best_score:.4f}")
 
 # -------------------------
-# Final KMeans Clustering
+# PSO to Optimize Initial Centroids for the Best k
 # -------------------------
-kmeans_final = MiniBatchKMeans(n_clusters=best_k, random_state=42, batch_size=2048, max_iter=100)
+print(f"\nRunning PSO to optimize {best_k} initial centroids...")
+centroid_sample_indices = np.random.choice(train_features.shape[0], min(3000, train_features.shape[0]), replace=False)
+sampled_train = train_features[centroid_sample_indices].toarray()
+
+n_features = sampled_train.shape[1]
+
+def centroid_objective(centroids_flat):
+    centroids = centroids_flat.reshape((best_k, n_features))
+    distances = np.linalg.norm(sampled_train[:, None, :] - centroids[None, :, :], axis=2)
+    labels = np.argmin(distances, axis=1)
+    sse = np.sum((sampled_train - centroids[labels]) ** 2)
+    return sse
+
+feature_min = sampled_train.min(axis=0)
+feature_max = sampled_train.max(axis=0)
+
+# Ensure ub > lb by adding a tiny epsilon to constant features
+epsilon = 1e-6
+feature_max_fixed = np.where(feature_max == feature_min, feature_min + epsilon, feature_max)
+
+lb = np.tile(feature_min, best_k)
+ub = np.tile(feature_max_fixed, best_k)
+
+best_centroids_flat, best_sse = pso(centroid_objective, lb, ub, swarmsize=15, maxiter=10)
+best_centroids = best_centroids_flat.reshape((best_k, n_features))
+print(f"PSO centroid optimization complete. Best SSE: {best_sse:.4f}")
+
+# -------------------------
+# Final KMeans Clustering with PSO Initialization
+# -------------------------
+kmeans_final = MiniBatchKMeans(
+    n_clusters=best_k,
+    init=best_centroids,
+    n_init=1,  # Use PSO centroids directly
+    random_state=42,
+    batch_size=2048,
+    max_iter=100
+)
 kmeans_final.fit(train_features)
 train_df['cluster'] = kmeans_final.labels_
 
@@ -88,16 +124,12 @@ distances_train_matrix = euclidean_distances(train_features, kmeans_final.cluste
 min_distances_train = distances_train_matrix[np.arange(train_features.shape[0]), train_df['cluster']]
 train_df['distance_to_centroid'] = min_distances_train
 
-# Threshold using Mean + 1 StdDev
 mean_distance = train_df['distance_to_centroid'].mean()
 std_distance = train_df['distance_to_centroid'].std()
-threshold = mean_distance + std_distance  # Balanced approach
+threshold = mean_distance + std_distance
+print(f"\nThreshold: {threshold:.4f}")
 
-print(f"\nUsing Mean + 1 StdDev as threshold: {threshold:.4f}")
-
-# Apply threshold
 train_df['review_type'] = np.where(train_df['distance_to_centroid'] > threshold, "Anomalous", "Normal")
-
 
 # -------------------------
 # Visualize PCA with Anomalies
@@ -119,13 +151,11 @@ plt.show()
 # Evaluation on Test Set
 # -------------------------
 test_df['cluster'] = kmeans_final.predict(test_features)
-
 distances_test_matrix = euclidean_distances(test_features, kmeans_final.cluster_centers_)
 min_distances_test = distances_test_matrix[np.arange(test_features.shape[0]), test_df['cluster']]
 test_df['distance_to_centroid'] = min_distances_test
 test_df['review_type'] = np.where(test_df['distance_to_centroid'] > threshold, "Anomalous", "Normal")
 
-# PCA Visualization (Test Set)
 if test_features.shape[0] > sample_size:
     sampled_indices_test = np.random.choice(test_features.shape[0], sample_size, replace=False)
     sampled_features_test = test_features[sampled_indices_test].toarray()
@@ -159,7 +189,6 @@ train_df['Review_Text_joined'] = train_df['processed_review'].apply(
 vectorizer = joblib.load("tfidf_vectorizer.pkl")
 feature_names = vectorizer.get_feature_names_out()
 
-# Slice centroids to exclude review_length feature
 centroids = kmeans_final.cluster_centers_[:, :len(feature_names)]
 
 def get_top_keywords_per_cluster(centroids, feature_names, n=10):
@@ -197,23 +226,16 @@ print("Models saved successfully!")
 # -------------------------
 # Count Clusters
 # -------------------------
-
-# Combine train and test sets
 combined_df = pd.concat([train_df, test_df], ignore_index=True)
-
-# Save combined dataset
 combined_df.to_csv("clustered_reviews.csv", index=False)
 print("Combined clustered dataset saved as clustered_reviews.csv")
 
-# Count Clusters
 df = pd.read_csv('clustered_reviews.csv')
 num_clusters = df['cluster'].nunique()
 print(f"Number of clusters: {num_clusters}")
 
-# Count how many reviews are in each cluster
 cluster_counts = df['cluster'].value_counts().sort_index()
 
-# Show as a table
 cluster_summary_table = pd.DataFrame({
     'Cluster': cluster_counts.index,
     'Number of Reviews': cluster_counts.values
@@ -222,7 +244,6 @@ cluster_summary_table = pd.DataFrame({
 print("\nCluster Summary Table:")
 print(cluster_summary_table)
 
-# Visualize as a bar chart
 plt.figure(figsize=(8, 6))
 sns.barplot(x=cluster_counts.index, y=cluster_counts.values, palette='viridis')
 plt.title("Number of Reviews per Cluster")
@@ -230,12 +251,10 @@ plt.xlabel("Cluster")
 plt.ylabel("Count")
 plt.show()
 
-# Basic info
 print(df.head())
 print("\nSummary statistics for distance_to_centroid:")
 print(df['distance_to_centroid'].describe())
 
-# Visualize the Distance Distribution
 plt.figure(figsize=(10,6))
 sns.histplot(df['distance_to_centroid'], bins=50, kde=True)
 plt.title("Distribution of Distances to Centroid")
