@@ -88,8 +88,16 @@ distances_train_matrix = euclidean_distances(train_features, kmeans_final.cluste
 min_distances_train = distances_train_matrix[np.arange(train_features.shape[0]), train_df['cluster']]
 train_df['distance_to_centroid'] = min_distances_train
 
-threshold = np.percentile(min_distances_train, 95)  # 95th percentile
+# Threshold using Mean + 1 StdDev
+mean_distance = train_df['distance_to_centroid'].mean()
+std_distance = train_df['distance_to_centroid'].std()
+threshold = mean_distance + std_distance  # Balanced approach
+
+print(f"\nUsing Mean + 1 StdDev as threshold: {threshold:.4f}")
+
+# Apply threshold
 train_df['review_type'] = np.where(train_df['distance_to_centroid'] > threshold, "Anomalous", "Normal")
+
 
 # -------------------------
 # Visualize PCA with Anomalies
@@ -185,3 +193,54 @@ print("Clustered datasets saved.")
 joblib.dump(kmeans_final, "kmeans_model.pkl")
 joblib.dump(threshold, "anomaly_distance_threshold.pkl")
 print("Models saved successfully!")
+
+# -------------------------
+# Count Clusters
+# -------------------------
+
+# Combine train and test sets
+combined_df = pd.concat([train_df, test_df], ignore_index=True)
+
+# Save combined dataset
+combined_df.to_csv("clustered_reviews.csv", index=False)
+print("Combined clustered dataset saved as clustered_reviews.csv")
+
+# Count Clusters
+df = pd.read_csv('clustered_reviews.csv')
+num_clusters = df['cluster'].nunique()
+print(f"Number of clusters: {num_clusters}")
+
+# Count how many reviews are in each cluster
+cluster_counts = df['cluster'].value_counts().sort_index()
+
+# Show as a table
+cluster_summary_table = pd.DataFrame({
+    'Cluster': cluster_counts.index,
+    'Number of Reviews': cluster_counts.values
+})
+
+print("\nCluster Summary Table:")
+print(cluster_summary_table)
+
+# Visualize as a bar chart
+plt.figure(figsize=(8, 6))
+sns.barplot(x=cluster_counts.index, y=cluster_counts.values, palette='viridis')
+plt.title("Number of Reviews per Cluster")
+plt.xlabel("Cluster")
+plt.ylabel("Count")
+plt.show()
+
+# Basic info
+print(df.head())
+print("\nSummary statistics for distance_to_centroid:")
+print(df['distance_to_centroid'].describe())
+
+# Visualize the Distance Distribution
+plt.figure(figsize=(10,6))
+sns.histplot(df['distance_to_centroid'], bins=50, kde=True)
+plt.title("Distribution of Distances to Centroid")
+plt.xlabel("Distance to Centroid")
+plt.ylabel("Frequency")
+plt.axvline(df['distance_to_centroid'].mean(), color='red', linestyle='dashed', linewidth=2, label='Mean')
+plt.legend()
+plt.show()
