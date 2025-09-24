@@ -57,9 +57,27 @@ if 'label' in df.columns:
     plt.ylabel('Count')
     plt.show()
 
+
 ### Train/Test Split
-train_df, test_df = train_test_split(df, test_size=0.3, random_state=42)
+train_list = []
+test_list = []
+
+for label in df['label'].unique():
+    class_subset = df[df['label'] == label]
+    train_sub, test_sub = train_test_split(
+        class_subset,
+        test_size=0.3,
+        random_state=42
+    )
+    train_list.append(train_sub)
+    test_list.append(test_sub)
+
+train_df = pd.concat(train_list).sample(frac=1, random_state=42).reset_index(drop=True)
+test_df = pd.concat(test_list).sample(frac=1, random_state=42).reset_index(drop=True)
+
 print(f"\nTraining set: {train_df.shape}, Test set: {test_df.shape}")
+print("Training class distribution:\n", train_df['label'].value_counts())
+print("Test class distribution:\n", test_df['label'].value_counts())
 
 ### TF-IDF Vectorization
 tfidf = TfidfVectorizer(

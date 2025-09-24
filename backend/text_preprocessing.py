@@ -15,7 +15,7 @@ nltk.download('wordnet')
 nltk.download('averaged_perceptron_tagger_eng')
 
 ### Load dataset
-df = pd.read_csv('before_preprocess_reviews.csv')
+df = pd.read_csv('before_preprocess_reviews.csv', encoding='latin2', sep=';')
 df.head()
 
 ### Lowercase, Punctuation, Emoji Removal
