@@ -40,7 +40,7 @@ print(f"✓ Anomaly threshold: {anomaly_threshold:.4f}")
 stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
 
-### POS tagging helper function (matching text_preprocessing.py)
+### POS tagging helper function
 def get_wordnet_pos(treebank_tag):
     if treebank_tag.startswith('J'):
         return wordnet.ADJ
@@ -53,7 +53,7 @@ def get_wordnet_pos(treebank_tag):
     else:
         return wordnet.NOUN
 
-### Preprocessing function (matching text_preprocessing.py)
+### Preprocessing function
 def preprocess_review(review_text):
     """
     Preprocess review text to match training pipeline.
@@ -81,7 +81,7 @@ def preprocess_review(review_text):
     
     return original_text, lemmatized_tokens
 
-### Feature extraction (matching feature_extraction.py)
+### Feature extraction
 def extract_features(original_text, processed_tokens):
     """
     Extract all features used in training pipeline.
@@ -89,18 +89,18 @@ def extract_features(original_text, processed_tokens):
     """
     features = {}
     
-    # Token-based features (from processed_review)
+    # Token-based features
     features['review_length'] = len(processed_tokens)
     features['lexical_diversity'] = len(set(processed_tokens)) / len(processed_tokens) if len(processed_tokens) > 0 else 0
     features['avg_word_length'] = np.mean([len(w) for w in processed_tokens]) if len(processed_tokens) > 0 else 0
     
-    # Sentiment Scores (from processed_review)
+    # Sentiment Scores
     joined_text = " ".join(processed_tokens)
     blob = TextBlob(joined_text)
     features['sentiment_polarity'] = blob.sentiment.polarity
     features['sentiment_subjectivity'] = blob.sentiment.subjectivity
     
-    # Word entropy (from processed_review)
+    # Word entropy
     if len(processed_tokens) == 0:
         features['word_entropy'] = 0
     else:
@@ -108,17 +108,17 @@ def extract_features(original_text, processed_tokens):
         probs = np.array(list(freq.values())) / len(processed_tokens)
         features['word_entropy'] = -np.sum(probs * np.log2(probs + 1e-10))
     
-    # Repetition Ratio (from processed_review)
+    # Repetition Ratio
     features['repetition_ratio'] = (len(processed_tokens) - len(set(processed_tokens))) / len(processed_tokens) if len(processed_tokens) > 0 else 0
     
-    # Punctuation features (from original_review)
+    # Punctuation features
     features['exclamation_count'] = original_text.count('!')
     features['question_count'] = original_text.count('?')
     
-    # Capital Letter Ratio (from original_review)
+    # Capital Letter Ratio
     features['capital_ratio'] = sum(1 for c in original_text if c.isupper()) / len(original_text) if len(original_text) > 0 else 0
     
-    # Punctuation Density (from original_review)
+    # Punctuation Densit
     features['punctuation_density'] = len(re.findall(r'\W', original_text)) / len(original_text) if len(original_text) > 0 else 0
     
     return features
@@ -134,7 +134,7 @@ def predict_review(review_text):
     # Step 2: Extract enhanced features
     enhanced_features = extract_features(original_text, processed_tokens)
     
-    # Order features to match training (CRITICAL!)
+    # Order features to match training
     feature_order = [
         'review_length', 'lexical_diversity', 'avg_word_length',
         'sentiment_polarity', 'sentiment_subjectivity', 'word_entropy',
@@ -151,7 +151,7 @@ def predict_review(review_text):
     scaled_enhanced = enhanced_scaler.transform(enhanced_array)
     scaled_enhanced_sparse = csr_matrix(scaled_enhanced)
     
-    # Step 5: Combine TF-IDF and enhanced features (matching training)
+    # Step 5: Combine TF-IDF and enhanced features
     combined_features = hstack([tfidf_features, scaled_enhanced_sparse])
     
     # Step 6: Apply SVD dimensionality reduction

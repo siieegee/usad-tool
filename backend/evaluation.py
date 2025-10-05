@@ -1,12 +1,7 @@
-"""
-Comprehensive Evaluation Script for Anomaly Detection Model
-Run this after training to get detailed performance metrics
-"""
-
 import sys
 import os
 
-# Clear Python cache to ensure latest code runs
+# Clear Python cache
 if hasattr(sys, 'dont_write_bytecode'):
     sys.dont_write_bytecode = True
 
@@ -318,7 +313,7 @@ if test_metrics['f1_score'] >= 0.70 and test_metrics['precision'] >= 0.70 and te
 # 8. SAVE EVALUATION REPORT
 # ========================================
 
-# Helper function to convert numpy types to Python types
+# Function to convert numpy types to Python types
 def convert_to_json_serializable(obj):
     """Recursively convert numpy types to Python native types"""
     if isinstance(obj, dict):

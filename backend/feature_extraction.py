@@ -27,7 +27,7 @@ print(f"Sample processed_review: {df['processed_review'].iloc[0][:10]}")  # Firs
 assert 'original_review' in df.columns, "Missing 'original_review' column!"
 assert 'processed_review' in df.columns, "Missing 'processed_review' column!"
 
-# Use correct column name (with underscore)
+# Use correct column name
 review_col = 'original_review'
 print(f"\nUsing '{review_col}' for original text features")
 
@@ -70,7 +70,7 @@ df['punctuation_density'] = df[review_col].apply(
     lambda x: len(re.findall(r'\W', str(x)))/len(str(x)) if len(str(x)) > 0 else 0
 )
 
-# VOCABULARY RICHNESS (word entropy from processed_review)
+# Word Entropy (from processed_review)
 def calculate_entropy(tokens):
     if len(tokens) == 0:
         return 0
@@ -93,7 +93,7 @@ print(f"Feature statistics:\n{df[feature_cols].describe()}")
 # ========== TRAIN/TEST SPLIT ==========
 print("\nSplitting data into train/test sets...")
 
-# Split train/test by label if label exists
+# Split train/test by label
 train_list, test_list = [], []
 if 'label' in df.columns:
     print("Stratified split by label...")

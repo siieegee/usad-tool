@@ -19,7 +19,7 @@ df = pd.read_csv('before_preprocess_reviews.csv', encoding='latin2', sep=';')
 print(f"Loaded dataset shape: {df.shape}")
 print(df.head())
 
-# IMPORTANT: Keep original review for feature extraction later
+# Keep original review for feature extraction later
 df['original_review'] = df['review'].copy()
 
 ### Lowercase, Punctuation, Emoji Removal
