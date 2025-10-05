@@ -1,13 +1,16 @@
 // Grab DOM elements
-const modal = document.getElementById('result-modal');
+const termsModal = document.getElementById('terms-modal');
+const resultModal = document.getElementById('result-modal');
 const submitBtn = document.getElementById('submit-btn');
 const reviewInput = document.getElementById('review-input');
+const termsAcceptBtn = document.getElementById('terms-accept-btn');
+const termsDeclineBtn = document.getElementById('terms-decline-btn');
 
 const resultTitle = document.getElementById('result-title');
 const resultMessage = document.getElementById('result-message');
 
-// Handle Submit Button Click
-submitBtn.addEventListener('click', async () => {
+// Handle Submit Button Click - Show Terms First
+submitBtn.addEventListener('click', () => {
     const reviewText = reviewInput.value.trim();
 
     if (!reviewText) {
@@ -15,8 +18,19 @@ submitBtn.addEventListener('click', async () => {
         return;
     }
 
-    // Open modal immediately
-    modal.classList.add('show');
+    // Show terms and conditions modal
+    termsModal.classList.add('show');
+});
+
+// Handle Terms Accept
+termsAcceptBtn.addEventListener('click', async () => {
+    const reviewText = reviewInput.value.trim();
+    
+    // Close terms modal
+    termsModal.classList.remove('show');
+    
+    // Open result modal immediately
+    resultModal.classList.add('show');
     resultTitle.textContent = "Analyzing...";
     resultMessage.textContent = "Please wait while we process your review.";
 
@@ -47,12 +61,19 @@ submitBtn.addEventListener('click', async () => {
         }
 
         // Display prediction in the modal
-        resultTitle.textContent = result.prediction; // "Normal" or "Anomalous"
-        resultMessage.innerHTML = `
-            <strong>Cluster:</strong> ${result.cluster}<br>
-            <strong>Distance:</strong> ${result.distance.toFixed(4)}<br>
-            <strong>Processed Review:</strong> ${result.processed_text}
-        `;
+        const isGenuine = result.prediction.toLowerCase() === "normal";
+        
+        if (isGenuine) {
+            resultTitle.textContent = "Genuine Review";
+            resultMessage.innerHTML = `
+                <p style="font-size: 1.1rem; margin-bottom: 20px;">This review appears <strong>Normal</strong> and shows typical patterns found in genuine customer feedback.</p>
+            `;
+        } else {
+            resultTitle.textContent = "Suspicious Review";
+            resultMessage.innerHTML = `
+                <p style="font-size: 1.1rem; margin-bottom: 20px;">This review appears <strong>Suspicious</strong> and shows unusual patterns that may indicate fraudulent activity.</p>
+            `;
+        }
     } catch (error) {
         console.error("Fetch or processing error:", error);
         resultTitle.textContent = "Error!";
@@ -60,9 +81,21 @@ submitBtn.addEventListener('click', async () => {
     }
 });
 
-// Close modal when clicking outside of the content area
-modal.addEventListener('click', (event) => {
-    if (event.target === modal) {
-        modal.classList.remove('show');
+// Handle Terms Decline
+termsDeclineBtn.addEventListener('click', () => {
+    termsModal.classList.remove('show');
+});
+
+// Close terms modal when clicking outside of the content area
+termsModal.addEventListener('click', (event) => {
+    if (event.target === termsModal) {
+        termsModal.classList.remove('show');
+    }
+});
+
+// Close result modal when clicking outside of the content area
+resultModal.addEventListener('click', (event) => {
+    if (event.target === resultModal) {
+        resultModal.classList.remove('show');
     }
 });
