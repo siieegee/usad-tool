@@ -1,177 +1,321 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from scipy import sparse
-from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.decomposition import TruncatedSVD, PCA
-from sklearn.cluster import MiniBatchKMeans
-from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
+from sklearn.decomposition import TruncatedSVD
+from sklearn.cluster import MiniBatchKMeans, DBSCAN
+from sklearn.metrics import (silhouette_score, confusion_matrix, accuracy_score,
+                             precision_score, recall_score, f1_score)
+from sklearn.preprocessing import normalize
 import joblib
-
 from pyswarm import pso
-
 import warnings
+import os
+
 warnings.filterwarnings('ignore')
 
-sns.set(style="whitegrid")
+# ========== SET RANDOM SEEDS FOR REPRODUCIBILITY ==========
+RANDOM_SEED = 42
+np.random.seed(RANDOM_SEED)
+import random
+random.seed(RANDOM_SEED)
 
-# -----------------------------
-# Load pre-split features and data
-# -----------------------------
+# ========== CONFIGURATION ==========
+SVD_COMPONENTS = 200
+DBSCAN_EPS = 0.1
+DBSCAN_MIN_SAMPLES = 10
+PSO_K_SWARMSIZE = 10
+PSO_K_MAXITER = 8
+PSO_CENTROID_SWARMSIZE = 20
+PSO_CENTROID_MAXITER = 15
+KMEANS_BATCH = 2048
+
+print("=" * 60)
+print("PSO-ENHANCED DBSCAN + K-MEANS CLUSTERING")
+print("=" * 60)
+
+# ========== LOAD DATA ==========
+print("\nLoading data...")
+
+# Check if files exist
+required_files = ["X_train.npz", "X_test.npz", "train_data.csv", "test_data.csv"]
+for file in required_files:
+    if not os.path.exists(file):
+        raise FileNotFoundError(f"Required file not found: {file}")
+
 train_features = sparse.load_npz("X_train.npz")
 test_features = sparse.load_npz("X_test.npz")
-
 train_df = pd.read_csv("train_data.csv")
 test_df = pd.read_csv("test_data.csv")
 
-print(f"Training features shape: {train_features.shape}")
-print(f"Test features shape: {test_features.shape}")
+print(f"✓ Training features shape: {train_features.shape}")
+print(f"✓ Test features shape: {test_features.shape}")
+print(f"✓ Training samples: {len(train_df)}")
+print(f"✓ Test samples: {len(test_df)}")
 
-# -----------------------------
-# Dimensionality reduction using TruncatedSVD for sparse data
-# -----------------------------
-# This step makes clustering more effective on high-dimensional TF-IDF data
-print("\nApplying Truncated SVD (300 components)...")
-svd = TruncatedSVD(n_components=300, random_state=42)
+# Map labels
+label_map = {'CG': 'Anomalous', 'OR': 'Normal'}
+train_df['true_label'] = train_df['label'].map(label_map)
+test_df['true_label'] = test_df['label'].map(label_map)
+
+print(f"\nLabel distribution (train):")
+print(train_df['true_label'].value_counts())
+
+# ========== DIMENSIONALITY REDUCTION ==========
+print(f"\n{'=' * 60}")
+print(f"PHASE 1: DIMENSIONALITY REDUCTION")
+print(f"{'=' * 60}")
+print(f"Applying Truncated SVD ({SVD_COMPONENTS} components)...")
+
+svd = TruncatedSVD(n_components=SVD_COMPONENTS, random_state=RANDOM_SEED)
 reduced_train = svd.fit_transform(train_features)
 reduced_test = svd.transform(test_features)
 
-print("Reduced train shape:", reduced_train.shape)
-print("Reduced test shape:", reduced_test.shape)
+print(f"✓ Explained variance ratio: {svd.explained_variance_ratio_.sum():.4f}")
 
-# Optional visualization with PCA after SVD
-pca_2d = PCA(n_components=2, random_state=42)
-visual_train = pca_2d.fit_transform(reduced_train)
-plt.figure(figsize=(8,6))
-sns.scatterplot(x=visual_train[:,0], y=visual_train[:,1], alpha=0.5)
-plt.title("PCA Visualization of Reduced Training Data")
-plt.xlabel("PC1")
-plt.ylabel("PC2")
-plt.show()
+# Normalize for cosine similarity
+reduced_train = normalize(reduced_train, norm='l2', axis=1)
+reduced_test = normalize(reduced_test, norm='l2', axis=1)
+print(f"✓ Features normalized for cosine similarity")
 
-# -----------------------------
-# Use PSO to find optimal number of clusters (k)
-# -----------------------------
-sample_size = min(5000, reduced_train.shape[0])
-sample_indices = np.random.choice(reduced_train.shape[0], sample_size, replace=False)
+# ========== DBSCAN CLUSTERING ==========
+print(f"\n{'=' * 60}")
+print(f"PHASE 2: DBSCAN CLUSTERING")
+print(f"{'=' * 60}")
+print(f"Running DBSCAN (eps={DBSCAN_EPS}, min_samples={DBSCAN_MIN_SAMPLES})...")
 
-print("\nOptimizing number of clusters using PSO...")
+dbscan = DBSCAN(eps=DBSCAN_EPS, min_samples=DBSCAN_MIN_SAMPLES, metric='cosine')
+dbscan.fit(reduced_train)
+dbscan_labels = dbscan.labels_
 
-def k_objective(k):
-    k = int(k[0])
-    if k < 2:
-        return 999999
-    km = MiniBatchKMeans(n_clusters=k, random_state=42, batch_size=2048)
-    km.fit(reduced_train)
-    labels = km.labels_[sample_indices]
-    score = silhouette_score(reduced_train[sample_indices], labels)
-    return -score  # PSO minimizes, so negate the silhouette score
+core_mask = dbscan_labels != -1
+noise_mask = dbscan_labels == -1
 
-lb, ub = [2], [12]
-best_k, best_score = pso(k_objective, lb, ub, swarmsize=20, maxiter=15)
+n_dbscan_clusters = len(set(dbscan_labels)) - (1 if -1 in dbscan_labels else 0)
+n_core_points = np.sum(core_mask)
+n_noise_points = np.sum(noise_mask)
 
-best_k = int(best_k[0])
-print(f"Optimal k found: {best_k} with silhouette score: {-best_score:.4f}")
+print(f"✓ DBSCAN clusters formed: {n_dbscan_clusters}")
+print(f"✓ Core points: {n_core_points}")
+print(f"✓ Noise/ambiguous points: {n_noise_points}")
 
-# -----------------------------
-# PSO to optimize initial centroids
-# -----------------------------
-print(f"\nRunning PSO to optimize centroids for k={best_k}...")
-centroid_sample_indices = np.random.choice(reduced_train.shape[0], min(3000, reduced_train.shape[0]), replace=False)
-sampled_train = reduced_train[centroid_sample_indices]
+# Initialize cluster assignments
+train_df['cluster'] = -2  # Default value
+train_df.loc[core_mask, 'cluster'] = dbscan_labels[core_mask]
 
-n_features = sampled_train.shape[1]
+# ========== PSO + K-MEANS ON NOISE POINTS ==========
+print(f"\n{'=' * 60}")
+print(f"PHASE 3: PSO-OPTIMIZED K-MEANS ON AMBIGUOUS POINTS")
+print(f"{'=' * 60}")
 
-def centroid_objective(flat_centroids):
-    centroids = flat_centroids.reshape((best_k, n_features))
-    distances = np.linalg.norm(sampled_train[:, None, :] - centroids[None, :, :], axis=2)
-    labels = np.argmin(distances, axis=1)
-    sse = np.sum((sampled_train - centroids[labels]) ** 2)
-    return sse
+subset_train = reduced_train[noise_mask]
 
-feature_min = sampled_train.min(axis=0)
-feature_max = sampled_train.max(axis=0)
-epsilon = 1e-6
-feature_max_fixed = np.where(feature_max == feature_min, feature_min + epsilon, feature_max)
+if subset_train.shape[0] >= 3:
+    print(f"Processing {subset_train.shape[0]} ambiguous points...")
+    
+    # Step 1: PSO to find optimal K
+    print("\nStep 1: Finding optimal K using PSO...")
+    
+    # Re-seed before PSO
+    np.random.seed(RANDOM_SEED)
+    random.seed(RANDOM_SEED)
+    
+    def k_objective(k):
+        k = int(k[0])
+        if k < 2:
+            return 999999
+        km = MiniBatchKMeans(n_clusters=k, random_state=RANDOM_SEED, batch_size=KMEANS_BATCH)
+        km.fit(subset_train)
+        score = silhouette_score(subset_train, km.labels_, metric='cosine')
+        return -score
+    
+    lb, ub = [2], [min(12, subset_train.shape[0] - 1)]
+    best_k, best_score = pso(k_objective, lb, ub,
+                             swarmsize=PSO_K_SWARMSIZE, maxiter=PSO_K_MAXITER)
+    best_k = int(best_k[0])
+    print(f"✓ Optimal K: {best_k}")
+    print(f"✓ Silhouette score: {-best_score:.4f}")
+    
+    # Step 2: PSO to optimize centroids
+    print("\nStep 2: Optimizing centroids using PSO...")
+    
+    # Re-seed before sampling
+    np.random.seed(RANDOM_SEED)
+    
+    # Sample subset for efficiency
+    centroid_sample_indices = np.random.choice(
+        subset_train.shape[0], 
+        min(2000, subset_train.shape[0]), 
+        replace=False
+    )
+    sampled_subset = subset_train[centroid_sample_indices]
+    n_features = sampled_subset.shape[1]
+    
+    # Re-seed before PSO centroid optimization
+    np.random.seed(RANDOM_SEED)
+    random.seed(RANDOM_SEED)
+    
+    def centroid_objective(flat_centroids):
+        centroids = flat_centroids.reshape((best_k, n_features))
+        centroids = centroids / (np.linalg.norm(centroids, axis=1, keepdims=True) + 1e-10)
+        sims = sampled_subset.dot(centroids.T)
+        labels = np.argmax(sims, axis=1)
+        sse = np.sum(1.0 - sims[np.arange(len(labels)), labels])
+        return sse
+    
+    # Set bounds for PSO
+    feature_min = sampled_subset.min(axis=0)
+    feature_max = sampled_subset.max(axis=0)
+    epsilon = 1e-6
+    feature_max_fixed = np.where(feature_max == feature_min, feature_min + epsilon, feature_max)
+    lb = np.tile(feature_min, best_k)
+    ub = np.tile(feature_max_fixed, best_k)
+    
+    # Run PSO for centroid optimization
+    best_centroids_flat, best_sse = pso(
+        centroid_objective, lb, ub,
+        swarmsize=PSO_CENTROID_SWARMSIZE,
+        maxiter=PSO_CENTROID_MAXITER
+    )
+    
+    best_centroids = best_centroids_flat.reshape((best_k, n_features))
+    best_centroids = best_centroids / (np.linalg.norm(best_centroids, axis=1, keepdims=True) + 1e-10)
+    print(f"✓ PSO centroid optimization complete")
+    print(f"✓ Best SSE: {best_sse:.4f}")
+    
+    # Step 3: Final K-Means with PSO-optimized centroids
+    print("\nStep 3: Running final K-Means with optimized centroids...")
+    
+    kmeans_final = MiniBatchKMeans(
+        n_clusters=best_k, 
+        init=best_centroids, 
+        n_init=1,
+        random_state=RANDOM_SEED, 
+        batch_size=KMEANS_BATCH, 
+        max_iter=200
+    )
+    kmeans_final.fit(subset_train)
+    
+    # Assign offset cluster labels
+    offset = dbscan_labels.max() + 1
+    train_df.loc[noise_mask, 'cluster'] = kmeans_final.labels_ + offset
+    print(f"✓ K-Means clustering complete")
+    print(f"✓ New clusters created: {best_k} (labels {offset} to {offset + best_k - 1})")
+    
+else:
+    print(f"⚠ Only {subset_train.shape[0]} ambiguous points - skipping PSO + K-means")
+    if subset_train.shape[0] > 0:
+        offset = dbscan_labels.max() + 1
+        train_df.loc[noise_mask, 'cluster'] = offset
 
-lb = np.tile(feature_min, best_k)
-ub = np.tile(feature_max_fixed, best_k)
+# ========== COMPUTE CENTROIDS & DISTANCES ==========
+print(f"\n{'=' * 60}")
+print(f"PHASE 4: DISTANCE CALCULATION")
+print(f"{'=' * 60}")
 
-best_centroids_flat, best_sse = pso(centroid_objective, lb, ub, swarmsize=30, maxiter=30)
-best_centroids = best_centroids_flat.reshape((best_k, n_features))
+unique_labels = np.unique(train_df['cluster'])
+centroids_dict = {}
 
-print(f"PSO centroid optimization complete. Best SSE: {best_sse:.4f}")
+print(f"Computing centroids for {len(unique_labels)} clusters...")
 
-# -----------------------------
-# Final KMeans clustering
-# -----------------------------
-kmeans_final = MiniBatchKMeans(
-    n_clusters=best_k,
-    init=best_centroids,
-    n_init=1,
-    random_state=42,
-    batch_size=2048,
-    max_iter=200
-)
+for label in unique_labels:
+    cluster_members = reduced_train[train_df['cluster'] == label]
+    if cluster_members.shape[0] == 0:
+        centroids_dict[label] = np.zeros(reduced_train.shape[1])
+    else:
+        cent = cluster_members.mean(axis=0)
+        centroids_dict[label] = cent / (np.linalg.norm(cent) + 1e-10)
 
-kmeans_final.fit(reduced_train)
-train_df['cluster'] = kmeans_final.labels_
+all_centroids = np.vstack([centroids_dict[label] for label in unique_labels])
+label_to_index = {label: idx for idx, label in enumerate(unique_labels)}
+train_centroid_indices = train_df['cluster'].map(label_to_index).values
 
-# -----------------------------
-# Distance-based anomaly detection using percentile threshold
-# -----------------------------
-distances_train = euclidean_distances(reduced_train, kmeans_final.cluster_centers_)
-min_distances_train = distances_train[np.arange(reduced_train.shape[0]), train_df['cluster']]
-train_df['distance_to_centroid'] = min_distances_train
+# Calculate cosine distances
+dot_products = np.sum(reduced_train * all_centroids[train_centroid_indices], axis=1)
+distances_train = 1.0 - dot_products
+train_df['distance_to_centroid'] = distances_train
 
-# Use 95th percentile instead of mean + std
-threshold = np.percentile(train_df['distance_to_centroid'], 50)
-print(f"\nAnomaly detection threshold (95th percentile): {threshold:.4f}")
+print(f"✓ Distance statistics:")
+print(f"  Mean: {distances_train.mean():.4f}")
+print(f"  Std: {distances_train.std():.4f}")
+print(f"  Min: {distances_train.min():.4f}")
+print(f"  Max: {distances_train.max():.4f}")
 
-train_df['review_type'] = np.where(train_df['distance_to_centroid'] > threshold, 'Anomalous', 'Normal')
+# ========== THRESHOLD SELECTION ==========
+print(f"\n{'=' * 60}")
+print(f"PHASE 5: THRESHOLD OPTIMIZATION")
+print(f"{'=' * 60}")
 
-plt.figure(figsize=(8,6))
-sns.scatterplot(x=visual_train[:,0], y=visual_train[:,1], hue=train_df['review_type'], palette=['green','red'], alpha=0.6)
-plt.title("Anomaly Detection Visualization (Training Set)")
-plt.xlabel("PC1")
-plt.ylabel("PC2")
-plt.show()
+best_f1, best_threshold = -1.0, None
+threshold_range = np.linspace(distances_train.min(), distances_train.max(), 100)
 
-# -----------------------------
-# Apply model to test set
-# -----------------------------
-test_df['cluster'] = kmeans_final.predict(reduced_test)
-distances_test = euclidean_distances(reduced_test, kmeans_final.cluster_centers_)
-min_distances_test = distances_test[np.arange(reduced_test.shape[0]), test_df['cluster']]
-test_df['distance_to_centroid'] = min_distances_test
-test_df['review_type'] = np.where(test_df['distance_to_centroid'] > threshold, 'Anomalous', 'Normal')
+print("Searching for optimal threshold...")
+for th in threshold_range:
+    preds = np.where(train_df['distance_to_centroid'] > th, 'Anomalous', 'Normal')
+    f1 = f1_score(train_df['true_label'], preds, pos_label='Anomalous')
+    if f1 > best_f1:
+        best_f1 = f1
+        best_threshold = th
 
-# -----------------------------
-# Evaluate clustering metrics
-# -----------------------------
-sample_eval_indices = np.random.choice(reduced_train.shape[0], min(5000, reduced_train.shape[0]), replace=False)
-labels_sample = train_df['cluster'].iloc[sample_eval_indices]
+print(f"✓ Optimal threshold: {best_threshold:.4f}")
+print(f"✓ Training F1 score: {best_f1:.4f}")
 
-sil_score = silhouette_score(reduced_train[sample_eval_indices], labels_sample)
-db_score = davies_bouldin_score(reduced_train[sample_eval_indices], labels_sample)
-ch_score = calinski_harabasz_score(reduced_train[sample_eval_indices], labels_sample)
+# ========== TEST SET EVALUATION ==========
+print(f"\n{'=' * 60}")
+print(f"PHASE 6: TEST SET EVALUATION")
+print(f"{'=' * 60}")
 
-print("\nClustering Evaluation Metrics:")
-print(f"Silhouette Score: {sil_score:.4f}")
-print(f"Davies-Bouldin Index: {db_score:.4f}")
-print(f"Calinski-Harabasz Score: {ch_score:.4f}")
+# Assign test samples to nearest cluster
+cosine_sim_matrix = reduced_test.dot(all_centroids.T)
+nearest_indices = np.argmax(cosine_sim_matrix, axis=1)
+test_df['cluster'] = [unique_labels[idx] for idx in nearest_indices]
 
-# -----------------------------
-# Save models and results
-# -----------------------------
-train_df.to_csv("clustered_reviews_train.csv", index=False)
-test_df.to_csv("clustered_reviews_test.csv", index=False)
-combined_df = pd.concat([train_df, test_df], ignore_index=True)
-combined_df.to_csv("clustered_reviews.csv", index=False)
+# Calculate distances for test set
+distances_test = 1.0 - np.max(cosine_sim_matrix, axis=1)
+test_df['distance_to_centroid'] = distances_test
 
-joblib.dump(kmeans_final, "kmeans_model.pkl")
-joblib.dump(threshold, "anomaly_distance_threshold.pkl")
-joblib.dump(svd, "svd_model.pkl")
+# Make predictions
+train_preds = np.where(train_df['distance_to_centroid'] > best_threshold, 'Anomalous', 'Normal')
+test_preds = np.where(test_df['distance_to_centroid'] > best_threshold, 'Anomalous', 'Normal')
 
-print("\nSaved clustered datasets and models successfully!")
+# Print metrics function
+def print_metrics(y_true, y_pred, dataset="Set"):
+    acc = accuracy_score(y_true, y_pred)
+    prec = precision_score(y_true, y_pred, pos_label='Anomalous', zero_division=0)
+    rec = recall_score(y_true, y_pred, pos_label='Anomalous', zero_division=0)
+    f1 = f1_score(y_true, y_pred, pos_label='Anomalous', zero_division=0)
+    cm = confusion_matrix(y_true, y_pred, labels=['Anomalous', 'Normal'])
+    
+    print(f"\n{dataset} Metrics:")
+    print(f"  Accuracy:  {acc:.4f}")
+    print(f"  Precision: {prec:.4f}")
+    print(f"  Recall:    {rec:.4f}")
+    print(f"  F1 Score:  {f1:.4f}")
+    print(f"\n  Confusion Matrix:")
+    print(f"              Predicted")
+    print(f"              Anom  Norm")
+    print(f"  Actual Anom  {cm[0][0]:4d}  {cm[0][1]:4d}")
+    print(f"         Norm  {cm[1][0]:4d}  {cm[1][1]:4d}")
+
+print_metrics(train_df['true_label'], train_preds, dataset="TRAINING")
+print_metrics(test_df['true_label'], test_preds, dataset="TEST")
+
+# ========== SAVE RESULTS ==========
+print(f"\n{'=' * 60}")
+print(f"SAVING RESULTS")
+print(f"{'=' * 60}")
+
+train_df.to_csv("best_run_train.csv", index=False)
+test_df.to_csv("best_run_test.csv", index=False)
+joblib.dump(all_centroids, "best_run_centroids.pkl")
+joblib.dump(svd, "best_run_svd.pkl")
+joblib.dump({"threshold": best_threshold, "f1_score": best_f1}, "best_run_threshold.pkl")
+
+print("✓ Saved: best_run_train.csv")
+print("✓ Saved: best_run_test.csv")
+print("✓ Saved: best_run_centroids.pkl")
+print("✓ Saved: best_run_svd.pkl")
+print("✓ Saved: best_run_threshold.pkl")
+
+print(f"\n{'=' * 60}")
+print("PIPELINE COMPLETED SUCCESSFULLY!")
+print(f"{'=' * 60}")

@@ -1,123 +1,168 @@
 import os
 import pandas as pd
-import ast
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import joblib
-
-from sklearn.model_selection import train_test_split
+import re
+import ast
+from textblob import TextBlob
+from collections import Counter
 from sklearn.feature_extraction.text import TfidfVectorizer
-from scipy.sparse import hstack, csr_matrix, save_npz
 from sklearn.preprocessing import StandardScaler
+from scipy.sparse import hstack, csr_matrix, save_npz
+from sklearn.model_selection import train_test_split
 
-# Set seaborn style
-sns.set(style="whitegrid")
-
-# -----------------------------
-# Load processed dataset
-# -----------------------------
+# Load preprocessed reviews
+print("Loading preprocessed data...")
 df = pd.read_csv('processed_reviews.csv')
-print(f"Initial dataset shape: {df.shape}")
-print(df.head())
+print(f'Initial dataset shape: {df.shape}')
+print(f'Available columns: {df.columns.tolist()}')
 
-# Convert string representation of tokens to list
-df['processed_review'] = df['processed_review'].apply(lambda x: ast.literal_eval(x))
+# Convert processed_review from string back to list
+print("\nConverting processed_review from string to list...")
+df['processed_review'] = df['processed_review'].apply(ast.literal_eval)
+print(f"Sample processed_review type: {type(df['processed_review'].iloc[0])}")
+print(f"Sample processed_review: {df['processed_review'].iloc[0][:10]}")  # First 10 tokens
 
-# Validate conversion
-print("\nSample processed tokens:", df['processed_review'].iloc[0])
-print("Type of processed_review:", type(df['processed_review'].iloc[0]))
+# Verify required columns exist
+assert 'original_review' in df.columns, "Missing 'original_review' column!"
+assert 'processed_review' in df.columns, "Missing 'processed_review' column!"
 
-# -----------------------------
-# Additional feature: review length
-# -----------------------------
-df['review_length'] = df['processed_review'].apply(len)
+# Use correct column name (with underscore)
+review_col = 'original_review'
+print(f"\nUsing '{review_col}' for original text features")
 
-plt.figure(figsize=(8,5))
-plt.hist(df['review_length'], bins=50, color='skyblue', edgecolor='black')
-plt.axvline(df['review_length'].mean(), color='red', linestyle='dashed', linewidth=2,
-            label=f'Mean: {df["review_length"].mean():.2f}')
-plt.title("Distribution of Review Lengths")
-plt.xlabel("Review Length (tokens)")
-plt.ylabel("Frequency")
-plt.legend()
-plt.show()
+# ========== FEATURE ENGINEERING ==========
+print("\nExtracting features...")
 
-# -----------------------------
-# Train/Test split by label (balanced)
-# -----------------------------
-train_list = []
-test_list = []
-
-for label in df['label'].unique():
-    subset = df[df['label'] == label]
-    train_sub, test_sub = train_test_split(subset, test_size=0.3, random_state=42)
-    train_list.append(train_sub)
-    test_list.append(test_sub)
-
-train_df = pd.concat(train_list).sample(frac=1, random_state=42).reset_index(drop=True)
-test_df = pd.concat(test_list).sample(frac=1, random_state=42).reset_index(drop=True)
-
-print("\nTraining class distribution:")
-print(train_df['label'].value_counts())
-print("\nTesting class distribution:")
-print(test_df['label'].value_counts())
-
-# -----------------------------
-# TF-IDF Vectorization (more flexible)
-# -----------------------------
-# Lower min_df to keep rare fraud-related words
-# Added validation to see total features retained
-tfidf = TfidfVectorizer(
-    max_features=15000,    # Increased to 15k for more coverage
-    min_df=2,              # Lowered from 5 to 2 to keep rare terms
-    ngram_range=(1,2)      # Unigrams + Bigrams
+# Token-based features (from processed_review)
+df['review_length'] = df['processed_review'].apply(len)  # Token count
+df['lexical_diversity'] = df['processed_review'].apply(
+    lambda x: len(set(x))/len(x) if len(x) > 0 else 0
+)
+df['avg_word_length'] = df['processed_review'].apply(
+    lambda x: np.mean([len(w) for w in x]) if len(x) > 0 else 0
 )
 
-# Fit and transform
-print("\nFitting TF-IDF on training data...")
-tfidf.fit(train_df['processed_review'].apply(lambda x: ' '.join(x)))
+# Sentiment Scores (from processed_review)
+df['sentiment_polarity'] = df['processed_review'].apply(
+    lambda x: TextBlob(" ".join(x)).sentiment.polarity
+)
+df['sentiment_subjectivity'] = df['processed_review'].apply(
+    lambda x: TextBlob(" ".join(x)).sentiment.subjectivity
+)
 
-X_train_tfidf = tfidf.transform(train_df['processed_review'].apply(lambda x: ' '.join(x)))
-X_test_tfidf = tfidf.transform(test_df['processed_review'].apply(lambda x: ' '.join(x)))
+# Repetition Ratio (from processed_review)
+df['repetition_ratio'] = df['processed_review'].apply(
+    lambda x: (len(x)-len(set(x)))/len(x) if len(x) > 0 else 0
+)
 
-print("TF-IDF feature count:", len(tfidf.get_feature_names_out()))
-print("Train TF-IDF shape:", X_train_tfidf.shape)
-print("Test TF-IDF shape:", X_test_tfidf.shape)
+# Punctuation features (from original_review)
+df['exclamation_count'] = df[review_col].apply(lambda x: str(x).count('!'))
+df['question_count'] = df[review_col].apply(lambda x: str(x).count('?'))
 
-# -----------------------------
-# Scale review_length and combine with TF-IDF
-# -----------------------------
+# Capital Letter Ratio (from original_review)
+df['capital_ratio'] = df[review_col].apply(
+    lambda x: sum(1 for c in str(x) if c.isupper())/len(str(x)) if len(str(x)) > 0 else 0
+)
+
+# Punctuation Density (from original_review)
+df['punctuation_density'] = df[review_col].apply(
+    lambda x: len(re.findall(r'\W', str(x)))/len(str(x)) if len(str(x)) > 0 else 0
+)
+
+# VOCABULARY RICHNESS (word entropy from processed_review)
+def calculate_entropy(tokens):
+    if len(tokens) == 0:
+        return 0
+    freq = Counter(tokens)
+    probs = np.array(list(freq.values()))/len(tokens)
+    return -np.sum(probs * np.log2(probs + 1e-10))
+
+df['word_entropy'] = df['processed_review'].apply(calculate_entropy)
+
+# Select all feature columns
+feature_cols = [
+    'review_length', 'lexical_diversity', 'avg_word_length',
+    'sentiment_polarity', 'sentiment_subjectivity', 'word_entropy',
+    'repetition_ratio', 'exclamation_count', 'question_count',
+    'capital_ratio', 'punctuation_density'
+]
+print(f"\nFeatures created: {feature_cols}")
+print(f"Feature statistics:\n{df[feature_cols].describe()}")
+
+# ========== TRAIN/TEST SPLIT ==========
+print("\nSplitting data into train/test sets...")
+
+# Split train/test by label if label exists
+train_list, test_list = [], []
+if 'label' in df.columns:
+    print("Stratified split by label...")
+    for label in df['label'].unique():
+        subset = df[df['label'] == label]
+        train_sub, test_sub = train_test_split(subset, test_size=0.3, random_state=42)
+        train_list.append(train_sub)
+        test_list.append(test_sub)
+    train_df = pd.concat(train_list).sample(frac=1, random_state=42).reset_index(drop=True)
+    test_df = pd.concat(test_list).sample(frac=1, random_state=42).reset_index(drop=True)
+    
+    print("\nTrain label distribution:")
+    print(train_df['label'].value_counts())
+    print("\nTest label distribution:")
+    print(test_df['label'].value_counts())
+else:
+    print("No label column found, random split...")
+    train_df, test_df = train_test_split(df, test_size=0.3, random_state=42)
+
+print(f"\nTrain size: {len(train_df)}, Test size: {len(test_df)}")
+
+# ========== TF-IDF VECTORIZATION ==========
+print("\nCreating TF-IDF features...")
+
+tfidf = TfidfVectorizer(
+    max_features=20000,      # Increased TF-IDF features
+    min_df=2,                # Only keep terms in at least 2 docs
+    ngram_range=(1, 3)       # Use unigrams, bigrams, and trigrams
+)
+
+# Fit on training data only
+tfidf.fit(train_df['processed_review'].apply(lambda x: " ".join(x)))
+X_train_tfidf = tfidf.transform(train_df['processed_review'].apply(lambda x: " ".join(x)))
+X_test_tfidf = tfidf.transform(test_df['processed_review'].apply(lambda x: " ".join(x)))
+
+print(f"TF-IDF vocabulary size: {len(tfidf.get_feature_names_out())}")
+print(f"Train TF-IDF shape: {X_train_tfidf.shape}")
+print(f"Test TF-IDF shape: {X_test_tfidf.shape}")
+
+# ========== SCALE AND COMBINE FEATURES ==========
+print("\nScaling and combining features...")
+
+# Scale enhanced features
 scaler = StandardScaler()
-train_len_scaled = scaler.fit_transform(train_df['review_length'].values.reshape(-1, 1))
-test_len_scaled = scaler.transform(test_df['review_length'].values.reshape(-1, 1))
+train_enhanced = scaler.fit_transform(train_df[feature_cols])
+test_enhanced = scaler.transform(test_df[feature_cols])
 
-train_len_sparse = csr_matrix(train_len_scaled)
-test_len_sparse = csr_matrix(test_len_scaled)
+# Convert to sparse format
+train_enhanced_sparse = csr_matrix(train_enhanced)
+test_enhanced_sparse = csr_matrix(test_enhanced)
 
-# Combine features into final sparse matrix
-X_train = hstack([X_train_tfidf, train_len_sparse])
-X_test = hstack([X_test_tfidf, test_len_sparse])
+# Combine TF-IDF and enhanced features
+X_train = hstack([X_train_tfidf, train_enhanced_sparse])
+X_test = hstack([X_test_tfidf, test_enhanced_sparse])
 
-print("Final X_train shape:", X_train.shape)
-print("Final X_test shape:", X_test.shape)
+print(f"\nFinal X_train shape: {X_train.shape}")
+print(f"Final X_test shape: {X_test.shape}")
+print(f"Total features: {X_train.shape[1]} (TF-IDF: {X_train_tfidf.shape[1]}, Enhanced: {len(feature_cols)})")
 
-# -----------------------------
-# Save artifacts
-# -----------------------------
+# ========== SAVE OUTPUTS ==========
+print("\nSaving feature extraction outputs...")
+
 joblib.dump(tfidf, "tfidf_vectorizer.pkl")
-print("Saved TF-IDF vectorizer -> tfidf_vectorizer.pkl")
-
-joblib.dump(scaler, "review_length_scaler.pkl")
-print("Saved review length scaler -> review_length_scaler.pkl")
-
+joblib.dump(scaler, "enhanced_feature_scaler.pkl")
 save_npz("X_train.npz", X_train)
 save_npz("X_test.npz", X_test)
-
 train_df.to_csv("train_data.csv", index=False)
 test_df.to_csv("test_data.csv", index=False)
 
-pd.DataFrame(tfidf.get_feature_names_out(), columns=['term']).to_csv("tfidf_vocabulary.csv", index=False)
-print("TF-IDF vocabulary saved -> tfidf_vocabulary.csv")
-
-print("\nFeature extraction completed successfully!")
+print("\n✓ Feature extraction completed successfully!")
+print(f"✓ Files saved: X_train.npz, X_test.npz, train_data.csv, test_data.csv")
+print(f"✓ Models saved: tfidf_vectorizer.pkl, enhanced_feature_scaler.pkl")

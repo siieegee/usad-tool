@@ -1,4 +1,3 @@
-### Setup & Imports
 import os
 import pandas as pd
 import re
@@ -13,10 +12,15 @@ nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('averaged_perceptron_tagger_eng')
+nltk.download('punkt_tab')
 
 ### Load dataset
 df = pd.read_csv('before_preprocess_reviews.csv', encoding='latin2', sep=';')
-df.head()
+print(f"Loaded dataset shape: {df.shape}")
+print(df.head())
+
+# IMPORTANT: Keep original review for feature extraction later
+df['original_review'] = df['review'].copy()
 
 ### Lowercase, Punctuation, Emoji Removal
 def clean_text(text):
@@ -77,11 +81,19 @@ def preprocess_text(text):
     return tokens
 
 ### Apply to Dataset
+print("\nApplying preprocessing...")
 df['processed_review'] = df['review'].apply(preprocess_text)
 
 # Preview results
-df[['review', 'processed_review']].head()
+print("\nPreview of results:")
+print(df[['original_review', 'review', 'processed_review']].head())
 
-### Save Results
+### Verify we have both columns
+print("\nColumns in dataframe:")
+print(df.columns.tolist())
+
+### Save Results with BOTH original and processed reviews
 df.to_csv('processed_reviews.csv', index=False)
-print("Processed dataset saved to processed_reviews.csv")
+print("\nProcessed dataset saved to processed_reviews.csv")
+print(f"Dataset contains {len(df)} reviews")
+print(f"Columns saved: {df.columns.tolist()}")
