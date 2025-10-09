@@ -34,6 +34,9 @@ class ReviewResponse(BaseModel):
     prediction: str
     cluster: int
     distance: float
+    threshold: float
+    confidence: float
+    features: dict
     processed_text: str
 
 # API endpoint

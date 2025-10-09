@@ -18,6 +18,7 @@
         <li><a href="#features">Features</a></li>
         <li><a href="#tool">Tool</a></li>
         <li><a href="#instructions">How to Use</a></li>
+        <li><a href="#understanding">Understand Results</a></li>
         <li><a href="#about">About Us</a></li>
       </ul>
     </div>
@@ -62,13 +63,28 @@
   <!-- Tool Section -->
   <section id="tool">
     <div class="container">
-      <div class="tool-box">
-        <h2>Product Review Detection</h2>
-        <p>
-          Enter an English product review below to check if it might be fraudulent using our unsupervised anomaly detection tool.
-        </p>
-        <textarea id="review-input" placeholder="Type or paste your product review here..."></textarea>
-        <button id="submit-btn" class="btn">Submit</button>
+      <div class="tool-grid">
+        <div class="tool-box left">
+          <h2>Product Review Detection</h2>
+          <p>
+            Enter an English product review below to check if it might be fraudulent using our unsupervised anomaly detection tool.
+          </p>
+          <label for="review-input" class="input-label">Your Review</label>
+          <textarea id="review-input" placeholder="Type or paste your product review here..." aria-label="Product review text" maxlength="2000"></textarea>
+          <div class="input-meta">
+            <span id="char-count">0 / 2000</span>
+          </div>
+          <button id="submit-btn" class="btn" aria-live="polite">Submit</button>
+        </div>
+        <div class="tool-box result-box right sticky-results">
+          <h2>Result</h2>
+          <div class="result-panel">
+            <h3 id="result-title">Waiting for input…</h3>
+            <div id="result-message">
+              Results will appear here after analysis.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -101,6 +117,102 @@
     </div>
   </div>
 </section>
+
+
+  <!-- Understanding Results Section -->
+  <section id="understanding">
+    <div class="container">
+      <h2>How to Understand the Results</h2>
+      <div class="instructions-content">
+        <div class="instruction-step">
+          <div class="step-number">1</div>
+          <h3>Decision</h3>
+          <p>
+            The model labels a review as <strong>Normal</strong> or <strong>Suspicious</strong> based on the overall wording pattern compared to typical reviews.
+          </p>
+        </div>
+        <div class="instruction-step">
+          <div class="step-number">2</div>
+          <h3>Confidence</h3>
+          <p>
+            A higher percentage means the model is more certain. Low confidence usually means the review is near the decision boundary.
+          </p>
+        </div>
+        <div class="instruction-step">
+          <div class="step-number">3</div>
+          <h3>Margin</h3>
+          <p>
+            Margin is the difference between the review's distance and the threshold. Larger positive margins indicate stronger anomalies.
+          </p>
+        </div>
+        <div class="instruction-step">
+          <div class="step-number">4</div>
+          <h3>Key Warning Signs</h3>
+          <p>
+            When available, short notes explain the most important signals driving a "Suspicious" result (e.g., high repetition or extreme tone).
+          </p>
+        </div>
+        <div class="instruction-step">
+          <div class="step-number">5</div>
+          <h3>Feature Criteria</h3>
+          <p>
+            Each feature shows <strong>Value</strong>, a <strong>Criteria</strong> range, and a <strong>Status</strong> badge. "Pass" means typical; "Warning" highlights unusual values.
+          </p>
+        </div>
+      </div>
+      <p style="margin-top: 18px; text-align: center;" class="result-hint">
+        Tip: Hover the <strong>?</strong> icons in the <strong>Results</strong> to see simple explanations of each feature.
+      </p>
+
+      <h2 id="feature-glossary" style="margin-top: 40px;">Feature Glossary</h2>
+      <div class="instructions-content">
+        <div class="instruction-step">
+          <h3>Length of review</h3>
+          <p>How many words are in the review. Very short reviews can look suspicious.</p>
+        </div>
+        <div class="instruction-step">
+          <h3>Word variety</h3>
+          <p>How varied the words are. More unique words usually mean a more natural review.</p>
+        </div>
+        <div class="instruction-step">
+          <h3>Average word length</h3>
+          <p>Average number of letters per word. Extremely short or long words can be unusual.</p>
+        </div>
+        <div class="instruction-step">
+          <h3>Overall tone</h3>
+          <p>Overall positivity or negativity. Extremely high or low values can be unnatural.</p>
+        </div>
+        <div class="instruction-step">
+          <h3>Opinion level</h3>
+          <p>How opinion-based the review is. Very subjective without details can be suspicious.</p>
+        </div>
+        <div class="instruction-step">
+          <h3>Language complexity</h3>
+          <p>How complex or varied the wording is. Low complexity may indicate template-like text.</p>
+        </div>
+        <div class="instruction-step">
+          <h3>Word repetition</h3>
+          <p>How often words are repeated. High repetition is common in fake reviews.</p>
+        </div>
+        <div class="instruction-step">
+          <h3>Exclamation marks</h3>
+          <p>How many exclamation marks are used. Too many can be a red flag.</p>
+        </div>
+        <div class="instruction-step">
+          <h3>Question marks</h3>
+          <p>How many question marks are used. Unusual punctuation patterns can be suspicious.</p>
+        </div>
+        <div class="instruction-step">
+          <h3>Capital letter usage</h3>
+          <p>How much of the text is CAPITALIZED. Excessive caps can look promotional.</p>
+        </div>
+        <div class="instruction-step">
+          <h3>Punctuation density</h3>
+          <p>How dense the punctuation is. Unusual patterns can be a signal.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
 
   <!-- About Section -->
@@ -157,15 +269,7 @@
     </div>
   </div>
 
-  <!-- Result Modal -->
-  <div id="result-modal" class="modal">
-    <div class="modal-content">
-      <h3 id="result-title">Analyzing...</h3>
-      <p id="result-message">
-        Please wait while we process your review.
-      </p>
-    </div>
-  </div>
+  
 
   <!-- External JavaScript file -->
   <script src="script.js"></script>
