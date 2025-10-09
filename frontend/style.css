@@ -413,117 +413,117 @@ nav {
 
 /* Instructions Section - use Home (hero) palette */
 #instructions {
-  background: var(--muted-bg);
-  padding: 80px 0 180px;
-  text-align: center;
-  opacity: 0;
-  animation: fadeInUp 0.8s ease forwards;
-  animation-delay: 0.7s;
+    background: var(--muted-bg);
+    padding: 80px 0 180px;
+    text-align: center;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease forwards;
+    animation-delay: 0.7s;
 }
 
 #instructions h2 {
-  font-size: 3rem;
-  margin-bottom: 50px;
-  color: var(--primary-color);
+    font-size: 3rem;
+    margin-bottom: 50px;
+    color: var(--primary-color);
 }
 /* Understanding Results Section - use Why Choose USAD (features) palette */
 #understanding {
-  background: var(--secondary-color);
-  padding: 80px 0 180px;
-  text-align: center;
-  opacity: 0;
-  animation: fadeInUp 0.8s ease forwards;
-  animation-delay: 0.7s;
+    background: var(--secondary-color);
+    padding: 80px 0 180px;
+    text-align: center;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease forwards;
+    animation-delay: 0.7s;
 }
 
 #understanding h2 {
-  font-size: 3rem;
-  margin-bottom: 36px;
-  color: var(--muted-bg);
+    font-size: 3rem;
+    margin-bottom: 36px;
+    color: var(--muted-bg);
 }
 
 #understanding .instruction-step h3 {
-  color: var(--secondary-color);
+    color: var(--secondary-color);
 }
 
 #understanding .result-hint {
-  color: #e6eef5;
+    color: #e6eef5;
 }
 
 /* Make understanding points horizontal */
 #understanding .instructions-content {
-  display: block; /* stack items vertically, each spanning full container width */
-  padding-bottom: 8px;
+    display: block; /* stack items vertically, each spanning full container width */
+    padding-bottom: 8px;
 }
 #understanding .instruction-step {
-  width: 100%;
-  text-align: left;
-  display: grid;
-  grid-template-columns: 60px 1fr;
-  column-gap: 16px;
-  align-items: start;
-  margin: 10px 0 16px;
+    width: 100%;
+    text-align: left;
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    column-gap: 16px;
+    align-items: start;
+    margin: 10px 0 16px;
 }
 #understanding .instruction-step .step-number {
-  grid-column: 1;
-  grid-row: 1 / span 2;
-  margin: 0;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    margin: 0;
 }
 #understanding .instruction-step h3 {
-  grid-column: 2;
-  margin-top: 0;
+    grid-column: 2;
+    margin-top: 0;
 }
 #understanding .instruction-step p {
-  grid-column: 2;
-  margin: 4px 0 0;
+    grid-column: 2;
+    margin: 4px 0 0;
 }
 
 .instructions-content {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 30px;
-  max-width: 1200px;
-  margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .instruction-step {
-  background: var(--card-bg);
-  border-radius: var(--radius);
-  padding: 40px 30px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 40px 30px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .instruction-step:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transform: translateY(-10px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .step-number {
-  width: 60px;
-  height: 60px;
-  background: var(--primary-color);
-  color: #fff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.8rem;
-  font-weight: bold;
-  margin: 0 auto 20px;
+    width: 60px;
+    height: 60px;
+    background: var(--primary-color);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin: 0 auto 20px;
 }
 
 .instruction-step h3 {
-  font-size: 1.5rem;
-  margin-bottom: 15px;
-  color: var(--secondary-color);
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: var(--secondary-color);
 }
 
 .instruction-step p {
-  font-size: 1.1rem;
-  color: #666;
-  line-height: 1.6;
+    font-size: 1.1rem;
+    color: #666;
+    line-height: 1.6;
 }
 
 /* About Section */
