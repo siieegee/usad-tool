@@ -445,13 +445,53 @@ termsAcceptBtn.addEventListener('click', async () => {
         // Sync heights after content update
         syncResultPanelHeight();
 
-        // Glossary button scroll
+        // Glossary button behavior: redirect to Feature Criteria panel and highlight the Learn More button
         const glossaryBtn = document.getElementById('glossary-btn');
         if (glossaryBtn) {
-            glossaryBtn.addEventListener('click', () => {
-                const el = document.getElementById('feature-glossary');
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
+        glossaryBtn.addEventListener('click', () => {
+        const learnMoreBtn = document.getElementById('feature-learn-more');
+        const criteriaPanel = document.querySelector('.feature-criteria-content');
+        const target = learnMoreBtn || criteriaPanel || document.getElementById('feature-glossary');
+        
+        if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // Highlight the Learn More button to draw attention
+        if (learnMoreBtn) {
+        // Keep the page from auto-scrolling due to focus
+        if (learnMoreBtn.focus) {
+        learnMoreBtn.focus({ preventScroll: true });
+        }
+        
+        const originalTransition = learnMoreBtn.style.transition;
+        const originalBoxShadow = learnMoreBtn.style.boxShadow;
+        const originalTransform = learnMoreBtn.style.transform;
+        
+        learnMoreBtn.style.transition = 'box-shadow 0.3s, transform 0.2s';
+        
+        let pulses = 0;
+        const pulse = () => {
+        learnMoreBtn.style.boxShadow = '0 0 0 4px rgba(193, 18, 31, 0.25), 0 0 12px rgba(193, 18, 31, 0.6)';
+        learnMoreBtn.style.transform = 'scale(1.04)';
+        setTimeout(() => {
+        learnMoreBtn.style.boxShadow = '0 0 0 0 rgba(0,0,0,0)';
+        learnMoreBtn.style.transform = 'scale(1.0)';
+        pulses++;
+        if (pulses < 3) {
+        setTimeout(pulse, 200);
+        } else {
+        setTimeout(() => {
+        learnMoreBtn.style.transition = originalTransition;
+        learnMoreBtn.style.boxShadow = originalBoxShadow;
+        learnMoreBtn.style.transform = originalTransform;
+        }, 600);
+        }
+        }, 450);
+        };
+        pulse();
+        }
+        });
         }
 
         // Match heights: set result panel height equal to left tool panel height
@@ -478,5 +518,30 @@ termsDeclineBtn.addEventListener('click', () => {
 termsModal.addEventListener('click', (event) => {
     if (event.target === termsModal) {
         termsModal.classList.remove('show');
+    }
+});
+
+// Feature Glossary Toggle
+document.addEventListener('DOMContentLoaded', () => {
+    const featureLearnMoreBtn = document.getElementById('feature-learn-more');
+    const featureGlossary = document.getElementById('feature-glossary');
+
+    if (featureLearnMoreBtn && featureGlossary) {
+    // Set initial label to match current visibility
+    const isHiddenInit = getComputedStyle(featureGlossary).display === 'none';
+    featureLearnMoreBtn.textContent = isHiddenInit ? 'Learn More About Features' : 'Hide Features';
+    
+    featureLearnMoreBtn.addEventListener('click', () => {
+    const isHidden = getComputedStyle(featureGlossary).display === 'none';
+    featureGlossary.style.display = isHidden ? 'block' : 'none';
+    featureLearnMoreBtn.textContent = isHidden ? 'Hide Features' : 'Learn More About Features';
+    
+    // Scroll to glossary if showing
+    if (isHidden) {
+    setTimeout(() => {
+    featureGlossary.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+    }
+    });
     }
 });

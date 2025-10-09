@@ -60,16 +60,16 @@ nav {
 }
 .nav-links {
     list-style: none;
-    font-size: 1.2rem;
+    font-size: 1rem;
     display: flex;
-    gap: 40px;
+    gap: 20px;
 }
 .nav-links a {
     color: #fff;
     font-weight: 500;
     cursor: pointer;
     transition: color 0.4s, background 0.4s, transform 0.4s;
-    padding: 8px 20px;
+    padding: 8px 14px;
     border-radius: 999px;
 }
 .nav-links a:active, .nav-links a:focus, .nav-links a:hover {
@@ -158,7 +158,9 @@ nav {
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-/* Tool Section */
+/* =========================================================
+   🧩 TOOL SECTION FIXED ALIGNMENT
+   ========================================================= */
 #tool {
     background: var(--light-bg);
     padding: 160px 0;
@@ -167,22 +169,29 @@ nav {
     animation: fadeInUp 0.8s ease forwards;
     animation-delay: 0.6s;
 }
+
+/* ✅ Updated layout */
 .tool-grid {
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
+    display: flex;
+    flex-wrap: wrap;
     gap: 24px;
-    align-items: stretch;
+    align-items: flex-start;
+    justify-content: center;
 }
+
 .tool-box {
+    flex: 1 1 500px;
+    max-width: 650px;
     background: #fff;
-    padding: 50px;
+    padding: 40px 45px;
     border-radius: var(--radius);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    max-width: 1400px;
-    margin: 0;
     text-align: left;
-    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
+
 .tool-box h2 {
     font-size: 2.5rem;
     margin-bottom: 20px;
@@ -222,6 +231,10 @@ nav {
 }
 
 /* Result panel styles */
+.result-box {
+    display: flex;
+    flex-direction: column;
+}
 .result-box h2 {
     margin-bottom: 10px;
 }
@@ -230,24 +243,19 @@ nav {
     color: inherit;
     border: 1px solid rgba(0,0,0,0.12);
     border-radius: 16px;
-    padding: 22px 22px;
+    padding: 22px;
     font-size: 1rem;
     line-height: 1.7;
-    /* height will be matched to left panel via JS */
+    flex-grow: 1;
     overflow-y: auto;
 }
-.sticky-results {
-    position: static; /* disable sticky so heights can match */
-    max-height: none;
-    overflow: visible;
-}
-.tool-box.left {
-    max-height: none; /* remove scroll from review panel */
-    overflow: visible;
-}
-.sticky-results .result-panel {
-    height: auto;
-    overflow-y: auto; /* keep its own scrollbar if content exceeds matched height */
+
+/* Responsive stacking for smaller screens */
+@media (max-width: 992px) {
+    .tool-grid {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
 /* Scrollbar styling for result panel */
@@ -278,6 +286,8 @@ nav {
 .result-panel table td {
     border-bottom: 1px solid rgba(0,0,0,0.1);
 }
+
+/* Remaining sections below (unchanged from your file) */
 
 /* Improved readability elements */
 .result-section { margin: 14px 0 16px; }
@@ -373,6 +383,7 @@ nav {
 }
 .progress-blue { background: var(--secondary-color); }
 .progress-red { background: var(--primary-color); }
+
 .reasons {
     margin: 8px 0 10px;
     padding-left: 18px;
@@ -411,7 +422,90 @@ nav {
     color: #333;
 }
 
-/* Instructions Section - use Home (hero) palette */
+/* Feature Glossary */
+.feature-glossary {
+    display: none;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.feature-glossary-container {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 30px;
+    width: 100%;
+    margin: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+
+.feature-glossary-container h3 {
+    color: var(--secondary-color);
+    margin-bottom: 30px;
+    text-align: center;
+    font-size: 1.8rem;
+}
+
+.feature-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.feature-detail {
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 12px;
+    text-align: left;
+    border: 1px solid #eee;
+}
+
+.feature-detail h4 {
+    color: var(--secondary-color);
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+}
+
+.feature-detail p {
+    color: #666;
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.feature-criteria-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+}
+
+.feature-criteria-content p {
+    margin: 0;
+    flex: 1;
+    text-align: left;
+}
+
+#feature-learn-more {
+    font-size: 1rem;
+    background: none;
+    color: var(--secondary-color);
+    text-decoration: underline;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    padding: 8px 16px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+#feature-learn-more:hover {
+    opacity: 0.8;
+}
+
+/* Instructions Section */
 #instructions {
     background: var(--muted-bg);
     padding: 80px 0 180px;
@@ -426,7 +520,7 @@ nav {
     margin-bottom: 50px;
     color: var(--primary-color);
 }
-/* Understanding Results Section - use Why Choose USAD (features) palette */
+/* Understanding Results Section */
 #understanding {
     background: var(--secondary-color);
     padding: 80px 0 180px;
@@ -450,9 +544,8 @@ nav {
     color: #e6eef5;
 }
 
-/* Make understanding points horizontal */
 #understanding .instructions-content {
-    display: block; /* stack items vertically, each spanning full container width */
+    display: block;
     padding-bottom: 8px;
 }
 #understanding .instruction-step {
@@ -477,6 +570,10 @@ nav {
     grid-column: 2;
     margin: 4px 0 0;
 }
+#understanding .instruction-step .feature-criteria-content,
+#understanding .instruction-step .feature-glossary {
+    grid-column: 2;
+}
 
 .instructions-content {
     display: grid;
@@ -486,7 +583,7 @@ nav {
     margin: 0 auto;
 }
 
-.instruction-step {
+.instructions-content .instruction-step {
     background: var(--card-bg);
     border-radius: var(--radius);
     padding: 40px 30px;
@@ -495,9 +592,21 @@ nav {
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.instruction-step:hover {
+.instructions-content .instruction-step:hover {
     transform: translateY(-10px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.feature-glossary .instruction-step {
+    background: none;
+    box-shadow: none;
+    padding: 20px 30px;
+    transition: none;
+}
+
+.feature-glossary .instruction-step:hover {
+    transform: none;
+    box-shadow: none;
 }
 
 .step-number {
