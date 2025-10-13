@@ -248,10 +248,10 @@ def run_full_evaluation(train_df: pd.DataFrame,
     if print_output:
         _print_header("7. FINAL SUMMARY & RECOMMENDATIONS")
         print(f"\nOVERALL MODEL PERFORMANCE:")
-        print(f"  Test F1-Score:    {test_metrics['f1_score']:.4f}")
+        print(f"  Test Accuracy:    {test_metrics['accuracy']:.4f}")
         print(f"  Test Precision:   {test_metrics['precision']:.4f}")
         print(f"  Test Recall:      {test_metrics['recall']:.4f}")
-        print(f"  Test Accuracy:    {test_metrics['accuracy']:.4f}")
+        print(f"  Test F1-Score:    {test_metrics['f1_score']:.4f}")
         print(f"  Test AUC-ROC:     {test_roc_auc:.4f}")
         print(f"  Separation Ratio: {separation_test:.4f}")
         print(f"\nMODEL GRADE:")
