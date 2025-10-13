@@ -254,32 +254,32 @@ def run_full_evaluation(train_df: pd.DataFrame,
         print(f"  Test F1-Score:    {test_metrics['f1_score']:.4f}")
         print(f"  Test AUC-ROC:     {test_roc_auc:.4f}")
         print(f"  Separation Ratio: {separation_test:.4f}")
-        print(f"\nMODEL GRADE:")
-    score_sum = (test_metrics['f1_score'] + test_roc_auc + min(separation_test/2, 1.0)) / 3
-    if score_sum >= 0.85:
-        grade = "A (EXCELLENT)"
-    elif score_sum >= 0.75:
-        grade = "B (GOOD)"
-    elif score_sum >= 0.65:
-        grade = "C (ACCEPTABLE)"
-    else:
-        grade = "D (NEEDS IMPROVEMENT)"
-    if print_output:
-        print(f"  Overall Grade: {grade}")
-        print(f"\nRECOMMENDATIONS:")
-        if test_metrics['f1_score'] < 0.70:
-            print(f"  - Consider retraining with different hyperparameters")
-            print(f"  - Try adding more features or better feature engineering")
-        if test_metrics['precision'] < 0.70:
-            print(f"  - Too many false alarms - consider increasing threshold")
-        if test_metrics['recall'] < 0.70:
-            print(f"  - Missing too many anomalies - consider decreasing threshold")
-        if separation_test < 1.5:
-            print(f"  - Poor class separation - consider different clustering algorithm")
-        if abs(train_metrics['f1_score'] - test_metrics['f1_score']) > 0.1:
-            print(f"  - Large train/test gap suggests overfitting")
-        if test_metrics['f1_score'] >= 0.70 and test_metrics['precision'] >= 0.70 and test_metrics['recall'] >= 0.70:
-            print(f"  Model is performing well and ready for production!")
+        # print(f"\nMODEL GRADE:")
+    # score_sum = (test_metrics['f1_score'] + test_roc_auc + min(separation_test/2, 1.0)) / 3
+    # if score_sum >= 0.85:
+    #     grade = "A (EXCELLENT)"
+    # elif score_sum >= 0.75:
+    #     grade = "B (GOOD)"
+    # elif score_sum >= 0.65:
+    #     grade = "C (ACCEPTABLE)"
+    # else:
+    #     grade = "D (NEEDS IMPROVEMENT)"
+    # if print_output:
+    #     print(f"  Overall Grade: {grade}")
+    #     print(f"\nRECOMMENDATIONS:")
+    #     if test_metrics['f1_score'] < 0.70:
+    #         print(f"  - Consider retraining with different hyperparameters")
+    #         print(f"  - Try adding more features or better feature engineering")
+    #     if test_metrics['precision'] < 0.70:
+    #         print(f"  - Too many false alarms - consider increasing threshold")
+    #     if test_metrics['recall'] < 0.70:
+    #         print(f"  - Missing too many anomalies - consider decreasing threshold")
+    #     if separation_test < 1.5:
+    #         print(f"  - Poor class separation - consider different clustering algorithm")
+    #     if abs(train_metrics['f1_score'] - test_metrics['f1_score']) > 0.1:
+    #         print(f"  - Large train/test gap suggests overfitting")
+    #     if test_metrics['f1_score'] >= 0.70 and test_metrics['precision'] >= 0.70 and test_metrics['recall'] >= 0.70:
+    #         print(f"  Model is performing well and ready for production!")
 
     # 8. Save report
     evaluation_report = {
@@ -304,7 +304,7 @@ def run_full_evaluation(train_df: pd.DataFrame,
             'current_accuracy': float(test_metrics['accuracy']),
             'optimal_f1': float(best_f1)
         },
-        'overall_grade': grade
+        # 'overall_grade': grade
     }
     evaluation_report = convert_to_json_serializable(evaluation_report)
 
