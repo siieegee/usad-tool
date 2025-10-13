@@ -429,9 +429,9 @@ termsAcceptBtn.addEventListener('click', async () => {
         const toggleEl = document.getElementById('details-toggle');
         const detailsEl = document.getElementById('details-content');
         if (toggleEl && detailsEl) {
-            // Auto-expand for readability
-            detailsEl.classList.add('show');
-            toggleEl.textContent = 'Hide technical details';
+            // Keep hidden by default; reveal only on click
+            detailsEl.classList.remove('show');
+            toggleEl.textContent = 'Show all technical details';
             toggleEl.addEventListener('click', () => {
                 const showing = detailsEl.classList.toggle('show');
                 toggleEl.textContent = showing ? 'Hide technical details' : 'Show all technical details';
