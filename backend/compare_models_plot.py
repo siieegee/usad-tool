@@ -1,7 +1,12 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
+import json
 
 sns.set_style("whitegrid")
+
+# Load evaluation report
+with open('evaluation_report.json', 'r') as f:
+    eval_data = json.load(f)
 
 # Input metrics (from user-provided results)
 models = [
@@ -25,12 +30,12 @@ models = [
     },
     {
         'name': 'Proposed Model',
-        'accuracy': 0.6770,
-        'precision': 0.6628,
-        'recall': 0.7521,
-        'f1': 0.7046,
-        #'auc': 0.7401,
-        #'separation': 1.3483,
+        'accuracy': eval_data['test_metrics']['accuracy'],
+        'precision': eval_data['test_metrics']['precision'],
+        'recall': eval_data['test_metrics']['recall'],
+        'f1': eval_data['test_metrics']['f1_score'],
+        #'auc': eval_data['roc_auc']['test'],
+        #'separation': eval_data['distance_statistics']['test_separation'],
     },
 ]
 
@@ -45,7 +50,7 @@ def plot_all_to_single_file(output_path: str = 'compare_models_overview.png'):
         #('separation', 'Separation Ratio by Model', 'Separation Ratio'),
     ]
 
-    fig, axes = plt.subplots(1, 4, figsize=(16, 4))
+    fig, axes = plt.subplots(1, 4, figsize=(12, 6))
     axes = axes.flatten()
 
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c']
@@ -53,7 +58,10 @@ def plot_all_to_single_file(output_path: str = 'compare_models_overview.png'):
 
     for ax, (key, title, ylabel) in zip(axes, metrics):
         values = [m[key] for m in models]
-        bars = ax.bar(names, values, color=colors)
+        x_pos = range(len(names))
+        bars = ax.bar(x_pos, values, color=colors, width=0.5)
+        ax.set_xticks(x_pos)
+        ax.set_xticklabels(names)
         ax.set_title(title)
         ax.set_ylabel(ylabel)
         # y-limit: cap at >=1.0 for prob-like metrics
