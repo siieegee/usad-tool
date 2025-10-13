@@ -78,6 +78,22 @@ const FEATURE_LABELS = {
     punctuation_density: "Punctuation density"
 };
 
+// Load data-driven basis from backend if available and override FEATURE_PROFILES.normal
+async function loadFeatureBasis() {
+    try {
+        const res = await fetch('http://127.0.0.1:8000/api/feature-basis');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.normal) {
+            FEATURE_PROFILES.normal = { ...FEATURE_PROFILES.normal, ...data.normal };
+        }
+    } catch (_) {
+        // Silently ignore if backend not available
+    }
+}
+
+loadFeatureBasis();
+
 // ENHANCED: Analyze features and generate specific reasons
 function analyzeFeatures(features, prediction) {
     const reasons = [];
@@ -361,39 +377,18 @@ termsAcceptBtn.addEventListener('click', async () => {
         resultMessage.innerHTML = `
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
                 <span class="${badgeClass}">${isGenuine ? 'Normal' : 'Suspicious'}</span>
-                <span style="color:#666; font-size:0.95rem;">Confidence:</span>
-                <div class="progress" style="flex:1; max-width: 180px;"><div class="${barClass}" style="width:${safeConfidence.toFixed(0)}%"></div></div>
-                <span style="font-size:0.95rem;"><strong>${safeConfidence.toFixed(0)}%</strong></span>
             </div>
 
             ${reasonsHtml}
 
-            <div style="margin-top: 16px;">
-                <p style="margin: 6px 0 8px; font-weight: 600; color: var(--secondary-color);">Top Feature Deviations:</p>
-                ${contributionsHtml}
-            </div>
-
             <div class="details-toggle" id="details-toggle">Show all technical details</div>
             <div class="details-content" id="details-content">
-                <p style="margin: 12px 0 8px; font-weight: 600; color: var(--secondary-color);">Decision Rule</p>
-                <div style="font-family: monospace; font-size: 0.92rem; line-height: 1.6; background: #f7fbff; border: 1px solid rgba(0,0,0,0.08); padding: 12px; border-radius: 8px;">
-                    <div style="margin-bottom: 6px;">Rule: <strong>Suspicious if distance > threshold</strong></div>
-                    <div>Distance: <strong>${distance.toFixed(4)}</strong></div>
-                    <div>Threshold: <strong>${threshold.toFixed(4)}</strong></div>
-                    <div>Margin: <strong>${margin.toFixed(4)}</strong> 
-                        <span class="${isGenuine ? 'status-tag status-pass' : 'status-tag status-warn'}" style="margin-left: 8px;">
-                            ${margin < 0 ? 'Below threshold (Normal)' : 'Above threshold (Suspicious)'}
-                        </span>
-                    </div>
-                </div>
-
                 <p style="margin: 16px 0 8px; font-weight: 600; color: var(--secondary-color);">All Feature Values</p>
                 <div style="overflow-x:auto;">
                     <table style="width:100%; border-collapse: collapse; font-size: 0.9rem; background: white;">
                         <thead>
                             <tr style="background: #f5f5f5;">
                                 <th style="text-align:left; padding:10px 8px; border-bottom: 2px solid #ddd;">Feature</th>
-                                <th style="text-align:right; padding:10px 8px; border-bottom: 2px solid #ddd;">Value</th>
                                 <th style="text-align:center; padding:10px 8px; border-bottom: 2px solid #ddd;">Status</th>
                             </tr>
                         </thead>
@@ -408,15 +403,15 @@ termsAcceptBtn.addEventListener('click', async () => {
                                 const statusText = inRange ? 'Normal' : 'Unusual';
                                 const niceName = FEATURE_LABELS[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                                 const desc = FEATURE_DESCRIPTIONS[key] || '';
+                                const basis = profile ? `Typical: ${Number(profile.min).toFixed(3)}–${Number(profile.max).toFixed(3)} (optimal ${Number(profile.optimal).toFixed(3)})` : '';
                                 
                                 return `
                                     <tr style="border-bottom: 1px solid #eee;">
                                         <td style="padding:10px 8px;">${niceName}
                                             <span class="help-icon" title="${desc}">?</span>
                                         </td>
-                                        <td style="padding:10px 8px; text-align:right; font-weight: 600;">${formatted}</td>
                                         <td style="padding:10px 8px; text-align:center;">
-                                            <span class="${statusClass}">${statusText}</span>
+                                            <span class="${statusClass}" title="Value: ${formatted}${basis ? ` | ${basis}` : ''}">${statusText}</span>
                                         </td>
                                     </tr>
                                 `;
