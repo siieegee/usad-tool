@@ -9,6 +9,7 @@ import pandas as pd
 import joblib
 from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score, confusion_matrix
 import matplotlib.pyplot as plt
+from evaluation_utils import detailed_metrics, run_full_evaluation
 
 print("="*80)
 print("QUICK THRESHOLD OPTIMIZATION")
@@ -18,6 +19,13 @@ print("="*80)
 print("\nLoading test data...")
 test_df = pd.read_csv("best_run_test.csv")
 print(f"Loaded {len(test_df)} test samples")
+# Optionally load train data for comprehensive evaluation
+try:
+    train_df = pd.read_csv("best_run_train.csv")
+    print("Loaded best_run_train.csv for comprehensive evaluation")
+except Exception:
+    train_df = None
+    print("best_run_train.csv not found; comprehensive evaluation will use test set only")
 
 # Load current threshold
 current_threshold_data = joblib.load("best_run_threshold.pkl")
@@ -26,14 +34,7 @@ print(f"Current threshold: {current_threshold:.4f}")
 
 # Calculate current performance
 current_preds = np.where(test_df['distance_to_centroid'] > current_threshold, 'Anomalous', 'Normal')
-current_f1 = f1_score(test_df['true_label'], current_preds, pos_label='Anomalous')
-current_prec = precision_score(test_df['true_label'], current_preds, pos_label='Anomalous')
-current_rec = recall_score(test_df['true_label'], current_preds, pos_label='Anomalous')
-
-print(f"\nCurrent Performance:")
-print(f"  F1-Score:  {current_f1:.4f} ({current_f1*100:.2f}%)")
-print(f"  Precision: {current_prec:.4f} ({current_prec*100:.2f}%)")
-print(f"  Recall:    {current_rec:.4f} ({current_rec*100:.2f}%)")
+current_metrics = detailed_metrics(test_df['true_label'], current_preds, "Test (Current threshold)")
 
 # Find optimal threshold
 print("\n" + "="*80)
@@ -73,15 +74,14 @@ for th in thresholds:
         }
 
 print(f"\nOptimal Threshold Found: {best_threshold:.4f}")
-print(f"\nOptimized Performance:")
-print(f"  F1-Score:  {best_metrics['f1']:.4f} ({best_metrics['f1']*100:.2f}%)")
-print(f"  Precision: {best_metrics['precision']:.4f} ({best_metrics['precision']*100:.2f}%)")
-print(f"  Recall:    {best_metrics['recall']:.4f} ({best_metrics['recall']*100:.2f}%)")
+new_preds = np.where(test_df['distance_to_centroid'] > best_threshold, 'Anomalous', 'Normal')
+best_metrics = detailed_metrics(test_df['true_label'], new_preds, "Test (Optimized threshold)")
 
 print(f"\nImprovement:")
-print(f"  F1-Score:  +{(best_metrics['f1'] - current_f1):.4f} ({(best_metrics['f1'] - current_f1)*100:.2f}%)")
-print(f"  Precision: {(best_metrics['precision'] - current_prec):+.4f} ({(best_metrics['precision'] - current_prec)*100:+.2f}%)")
-print(f"  Recall:    +{(best_metrics['recall'] - current_rec):.4f} ({(best_metrics['recall'] - current_rec)*100:.2f}%)")
+print(f"  F1-Score:  {(best_metrics['f1_score'] - current_metrics['f1_score']):+.4f} ({(best_metrics['f1_score'] - current_metrics['f1_score'])*100:+.2f}%)")
+print(f"  Precision: {(best_metrics['precision'] - current_metrics['precision']):+.4f} ({(best_metrics['precision'] - current_metrics['precision'])*100:+.2f}%)")
+print(f"  Recall:    {(best_metrics['recall'] - current_metrics['recall']):+.4f} ({(best_metrics['recall'] - current_metrics['recall'])*100:+.2f}%)")
+print(f"  Accuracy:  {(best_metrics['accuracy'] - current_metrics['accuracy']):+.4f} ({(best_metrics['accuracy'] - current_metrics['accuracy'])*100:+.2f}%)")
 
 # Calculate confusion matrix with new threshold
 new_preds = np.where(test_df['distance_to_centroid'] > best_threshold, 'Anomalous', 'Normal')
@@ -110,11 +110,12 @@ if response in ['yes', 'y']:
     # Update threshold file
     updated_threshold_data = {
         "threshold": float(best_threshold),
-        "f1_score": float(best_metrics['f1']),
+        "f1_score": float(best_metrics['f1_score']),
         "precision": float(best_metrics['precision']),
         "recall": float(best_metrics['recall']),
+        "accuracy": float(best_metrics['accuracy']),
         "previous_threshold": float(current_threshold),
-        "improvement": float(best_metrics['f1'] - current_f1)
+        "improvement": float(best_metrics['f1_score'] - current_metrics['f1_score'])
     }
     
     joblib.dump(updated_threshold_data, "best_run_threshold.pkl")
@@ -128,6 +129,12 @@ if response in ['yes', 'y']:
     print("✓ Updated: best_run_threshold.pkl")
     print("✓ Updated: best_run_test.csv")
     print("\nYou can now use review_prediction.py with the optimized threshold!")
+
+    # Run comprehensive evaluation to match evaluation.py output
+    if train_df is not None:
+        run_full_evaluation(train_df, test_df, best_threshold)
+    else:
+        print("\nSkipping comprehensive evaluation: training data not available.")
     
     # Optional: Create visualization
     create_viz = input("\nCreate visualization plot? (yes/no): ").strip().lower()

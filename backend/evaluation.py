@@ -275,9 +275,10 @@ print("7. FINAL SUMMARY & RECOMMENDATIONS")
 print("="*80)
 
 print(f"\nOVERALL MODEL PERFORMANCE:")
-print(f"  Test F1-Score:    {test_metrics['f1_score']:.4f}")
+print(f"  Test Accuracy:    {test_metrics['accuracy']:.4f}")
 print(f"  Test Precision:   {test_metrics['precision']:.4f}")
 print(f"  Test Recall:      {test_metrics['recall']:.4f}")
+print(f"  Test F1-Score:    {test_metrics['f1_score']:.4f}")
 print(f"  Test AUC-ROC:     {test_roc_auc:.4f}")
 print(f"  Separation Ratio: {separation_test:.4f}")
 
@@ -350,6 +351,7 @@ evaluation_report = {
         'current_threshold': float(threshold),
         'optimal_threshold': float(best_f1_threshold),
         'current_f1': float(test_metrics['f1_score']),
+        'current_accuracy': float(test_metrics['accuracy']),
         'optimal_f1': float(best_f1)
     },
     'overall_grade': grade

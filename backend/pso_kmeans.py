@@ -10,6 +10,7 @@ import joblib
 from pyswarm import pso
 import warnings
 import os
+from evaluation_utils import run_full_evaluation
 
 warnings.filterwarnings('ignore')
 
@@ -277,27 +278,8 @@ test_df['distance_to_centroid'] = distances_test
 train_preds = np.where(train_df['distance_to_centroid'] > best_threshold, 'Anomalous', 'Normal')
 test_preds = np.where(test_df['distance_to_centroid'] > best_threshold, 'Anomalous', 'Normal')
 
-# Print metrics function
-def print_metrics(y_true, y_pred, dataset="Set"):
-    acc = accuracy_score(y_true, y_pred)
-    prec = precision_score(y_true, y_pred, pos_label='Anomalous', zero_division=0)
-    rec = recall_score(y_true, y_pred, pos_label='Anomalous', zero_division=0)
-    f1 = f1_score(y_true, y_pred, pos_label='Anomalous', zero_division=0)
-    cm = confusion_matrix(y_true, y_pred, labels=['Anomalous', 'Normal'])
-    
-    print(f"\n{dataset} Metrics:")
-    print(f"  Accuracy:  {acc:.4f}")
-    print(f"  Precision: {prec:.4f}")
-    print(f"  Recall:    {rec:.4f}")
-    print(f"  F1 Score:  {f1:.4f}")
-    print(f"\n  Confusion Matrix:")
-    print(f"              Predicted")
-    print(f"              Anom  Norm")
-    print(f"  Actual Anom  {cm[0][0]:4d}  {cm[0][1]:4d}")
-    print(f"         Norm  {cm[1][0]:4d}  {cm[1][1]:4d}")
-
-print_metrics(train_df['true_label'], train_preds, dataset="TRAINING")
-print_metrics(test_df['true_label'], test_preds, dataset="TEST")
+# Run comprehensive evaluation identical to evaluation.py
+run_full_evaluation(train_df, test_df, best_threshold)
 
 # ========== SAVE RESULTS ==========
 print(f"\n{'=' * 60}")

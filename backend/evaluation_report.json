@@ -43,6 +43,7 @@
     "current_threshold": 0.5399906159659807,
     "optimal_threshold": 0.5387083337169947,
     "current_f1": 0.7046456425907087,
+    "current_accuracy": 0.6769886890413499,
     "optimal_f1": 0.7045685279187818
   },
   "overall_grade": "C (ACCEPTABLE)"
