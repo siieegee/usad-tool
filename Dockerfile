@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Install dependencies
 COPY ./backend/requirements.txt .
-RUN pip install scikit-learn==1.6.1 --no-deps
+RUN pip install scikit-learn==1.6.1
 RUN pip install -r requirements.txt
 
 # Download NLTK stopwords during build
