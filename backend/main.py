@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
 import json
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 # Import functions from review_prediction.py
 from .review_prediction import predict_review
@@ -39,6 +41,14 @@ class ReviewResponse(BaseModel):
     threshold: float
     features: dict
     processed_text: str
+
+# Serve the entire 'frontend' folder at /static
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+# Serve index.html at root
+@app.get("/")
+def read_index():
+    return FileResponse(os.path.join("frontend", "index.html"))
 
 # API endpoint
 @app.post("/api/predict", response_model=ReviewResponse)
