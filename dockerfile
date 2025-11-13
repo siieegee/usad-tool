@@ -6,6 +6,9 @@ WORKDIR /app
 COPY ./backend/requirements.txt .
 RUN pip install -r requirements.txt
 
+# Download NLTK stopwords during build
+RUN python -m nltk.downloader stopwords
+
 # Copy backend and frontend
 COPY ./backend /app/backend
 COPY ./frontend /app/frontend
