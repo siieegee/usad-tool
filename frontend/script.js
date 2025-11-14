@@ -78,10 +78,13 @@ const FEATURE_LABELS = {
     punctuation_density: "Punctuation density"
 };
 
+// Get API base URL - works for both local and deployed environments
+const API_BASE_URL = window.location.origin;
+
 // Load data-driven basis from backend if available and override FEATURE_PROFILES.normal
 async function loadFeatureBasis() {
     try {
-        const res = await fetch('http://127.0.0.1:8000/api/feature-basis');
+        const res = await fetch(`${API_BASE_URL}/api/feature-basis`);
         if (!res.ok) return;
         const data = await res.json();
         if (data && data.normal) {
@@ -265,7 +268,7 @@ termsAcceptBtn.addEventListener('click', async () => {
     resultMessage.textContent = "Please wait while we process your review.";
 
     try {
-        const response = await fetch("http://127.0.0.1:8000/api/predict", {
+        const response = await fetch(`${API_BASE_URL}/api/predict`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
