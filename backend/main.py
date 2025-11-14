@@ -6,6 +6,8 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import os
 import json
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 # Import functions from review_prediction.py
 from .review_prediction import predict_review
