@@ -308,9 +308,16 @@ termsAcceptBtn.addEventListener('click', async () => {
         let reasonsHtml = '';
         if (analysis.reasons.length > 0) {
             reasonsHtml = '<div style="margin: 8px 0; font-size: 0.9rem;">';
-            reasonsHtml += '<p style="margin: 4px 0 6px; font-weight: 600; color: var(--secondary-color); font-size: 0.95rem;">Key Warning Signs:</p>';
+            reasonsHtml += (
+                '<p style="margin: 4px 0 6px; font-weight: 600; ' +
+                'color: var(--secondary-color); font-size: 0.95rem;">' +
+                'Key Warning Signs:</p>'
+            );
             analysis.reasons.forEach(reason => {
-                const severityColor = reason.severity === 'high' ? '#d32f2f' : reason.severity === 'medium' ? '#f57c00' : '#fbc02d';
+                const severityColor = (
+                    reason.severity === 'high' ? '#d32f2f' :
+                    reason.severity === 'medium' ? '#f57c00' : '#fbc02d'
+                );
                 reasonsHtml += `
                     <div style=\"margin: 6px 0; padding: 8px; background: #fff3e0; border-left: 4px solid ${severityColor}; border-radius: 4px;\">
                         <div style=\"font-weight: 600; color: ${severityColor}; margin-bottom: 2px; font-size: 0.92rem;\">
@@ -324,14 +331,25 @@ termsAcceptBtn.addEventListener('click', async () => {
             });
             reasonsHtml += '</div>';
         } else if (isGenuine) {
-            reasonsHtml = '<div style="margin: 10px 0; padding: 12px; background: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 4px;">';
-            reasonsHtml += '<p style="margin: 0; color: #2e7d32; font-weight: 500;">All features are within normal ranges. This review shows characteristics of genuine feedback.</p>';
+            reasonsHtml += (
+                '<div style="margin: 10px 0; padding: 12px; ' +
+                'background: #e8f5e9; border-left: 4px solid #4caf50; ' +
+                'border-radius: 4px;">'
+            );
+            reasonsHtml += (
+                '<p style="margin: 0; color: #2e7d32; font-weight: 500;">' +
+                'All features are within normal ranges. This review shows ' +
+                'characteristics of genuine feedback.</p>'
+            );
             reasonsHtml += '</div>';
         }
-        
+
         // Add minor warnings if any
         if (analysis.warnings.length > 0 && !isGenuine) {
-            reasonsHtml += '<p style="margin: 12px 0 6px; font-weight: 600; color: #666; font-size: 0.9rem;">Minor Observations:</p>';
+            reasonsHtml += (
+                '<p style="margin: 12px 0 6px; font-weight: 600; ' +
+                'color: #666; font-size: 0.9rem;">Minor Observations:</p>'
+            );
             analysis.warnings.forEach(warning => {
                 reasonsHtml += `
                     <div style="margin: 6px 0; padding: 8px; background: #f5f5f5; border-left: 3px solid #999; border-radius: 4px; font-size: 0.9rem;">
@@ -344,14 +362,20 @@ termsAcceptBtn.addEventListener('click', async () => {
         // Build feature contributions table
         const topContributions = contributions.slice(0, 5);
         const contributionsHtml = topContributions.map(c => {
-            const formatted = typeof c.value === 'number' ? 
-                (Math.abs(c.value) < 1 && c.value !== 0 ? c.value.toFixed(4) : c.value.toFixed(2)) : 
-                String(c.value);
-            const statusClass = c.inRange ? 'status-tag status-pass' : 'status-tag status-warn';
+            const formatted = typeof c.value === 'number'
+                ? (Math.abs(c.value) < 1 && c.value !== 0
+                    ? c.value.toFixed(4)
+                    : c.value.toFixed(2))
+                : String(c.value);
+            const statusClass = c.inRange
+                ? 'status-tag status-pass'
+                : 'status-tag status-warn';
             const statusText = c.inRange ? 'Normal' : 'Unusual';
             const deviationBar = Math.min(c.deviation, 100);
             const barColor = c.inRange ? '#4caf50' : '#f57c00';
-            const niceName = FEATURE_LABELS[c.feature] || c.feature.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            const niceName = FEATURE_LABELS[c.feature] ||
+                c.feature.replace(/_/g, ' ')
+                    .replace(/\b\w/g, l => l.toUpperCase());
             const desc = FEATURE_DESCRIPTIONS[c.feature] || '';
             
             return `
@@ -397,16 +421,28 @@ termsAcceptBtn.addEventListener('click', async () => {
                         </thead>
                         <tbody>
                             ${Object.entries(features).map(([key, value]) => {
-                                const formatted = typeof value === 'number' ? 
-                                    (Math.abs(value) < 1 && value !== 0 ? value.toFixed(4) : value.toFixed(3)) : 
-                                    String(value);
+                                const formatted = typeof value === 'number'
+                                    ? (Math.abs(value) < 1 && value !== 0
+                                        ? value.toFixed(4)
+                                        : value.toFixed(3))
+                                    : String(value);
                                 const profile = FEATURE_PROFILES.normal[key];
-                                const inRange = profile ? (value >= profile.min && value <= profile.max) : true;
-                                const statusClass = inRange ? 'status-tag status-pass' : 'status-tag status-warn';
+                                const inRange = profile
+                                    ? (value >= profile.min && value <= profile.max)
+                                    : true;
+                                const statusClass = inRange
+                                    ? 'status-tag status-pass'
+                                    : 'status-tag status-warn';
                                 const statusText = inRange ? 'Normal' : 'Unusual';
-                                const niceName = FEATURE_LABELS[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                const niceName = FEATURE_LABELS[key] ||
+                                    key.replace(/_/g, ' ')
+                                        .replace(/\b\w/g, l => l.toUpperCase());
                                 const desc = FEATURE_DESCRIPTIONS[key] || '';
-                                const basis = profile ? `Typical: ${Number(profile.min).toFixed(3)}–${Number(profile.max).toFixed(3)} (optimal ${Number(profile.optimal).toFixed(3)})` : '';
+                                const basis = profile
+                                    ? `Typical: ${Number(profile.min).toFixed(3)}–` +
+                                      `${Number(profile.max).toFixed(3)} ` +
+                                      `(optimal ${Number(profile.optimal).toFixed(3)})`
+                                    : '';
                                 
                                 return `
                                     <tr style="border-bottom: 1px solid #eee;">
@@ -443,53 +479,73 @@ termsAcceptBtn.addEventListener('click', async () => {
         // Sync heights after content update
         syncResultPanelHeight();
 
-        // Glossary button behavior: redirect to Feature Criteria panel and highlight the Learn More button
+        // Glossary button: redirect to Feature Criteria panel and highlight button
         const glossaryBtn = document.getElementById('glossary-btn');
         if (glossaryBtn) {
-        glossaryBtn.addEventListener('click', () => {
-        const learnMoreBtn = document.getElementById('feature-learn-more');
-        const criteriaPanel = document.querySelector('.feature-criteria-content');
-        const target = learnMoreBtn || criteriaPanel || document.getElementById('feature-glossary');
-        
-        if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        
-        // Highlight the Learn More button to draw attention
-        if (learnMoreBtn) {
-        // Keep the page from auto-scrolling due to focus
-        if (learnMoreBtn.focus) {
-        learnMoreBtn.focus({ preventScroll: true });
-        }
-        
-        const originalTransition = learnMoreBtn.style.transition;
-        const originalBoxShadow = learnMoreBtn.style.boxShadow;
-        const originalTransform = learnMoreBtn.style.transform;
-        
-        learnMoreBtn.style.transition = 'box-shadow 0.3s, transform 0.2s';
-        
-        let pulses = 0;
-        const pulse = () => {
-        learnMoreBtn.style.boxShadow = '0 0 0 4px rgba(193, 18, 31, 0.25), 0 0 12px rgba(193, 18, 31, 0.6)';
-        learnMoreBtn.style.transform = 'scale(1.04)';
-        setTimeout(() => {
-        learnMoreBtn.style.boxShadow = '0 0 0 0 rgba(0,0,0,0)';
-        learnMoreBtn.style.transform = 'scale(1.0)';
-        pulses++;
-        if (pulses < 3) {
-        setTimeout(pulse, 200);
-        } else {
-        setTimeout(() => {
-        learnMoreBtn.style.transition = originalTransition;
-        learnMoreBtn.style.boxShadow = originalBoxShadow;
-        learnMoreBtn.style.transform = originalTransform;
-        }, 600);
-        }
-        }, 450);
-        };
-        pulse();
-        }
-        });
+            glossaryBtn.addEventListener('click', () => {
+                const learnMoreBtn = document.getElementById('feature-learn-more');
+                const criteriaPanel = document.querySelector(
+                    '.feature-criteria-content'
+                );
+                const glossaryEl = document.getElementById('feature-glossary');
+                const target = learnMoreBtn || criteriaPanel || glossaryEl;
+
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
+
+                // Highlight the Learn More button to draw attention
+                if (learnMoreBtn) {
+                    // Keep the page from auto-scrolling due to focus
+                    if (learnMoreBtn.focus) {
+                        learnMoreBtn.focus({ preventScroll: true });
+                    }
+
+                    const originalTransition = learnMoreBtn.style.transition;
+                    const originalBoxShadow = learnMoreBtn.style.boxShadow;
+                    const originalTransform = learnMoreBtn.style.transform;
+
+                    learnMoreBtn.style.transition = (
+                        'box-shadow 0.3s, transform 0.2s'
+                    );
+
+                    let pulses = 0;
+                    const pulse = () => {
+                        const shadowValue = (
+                            '0 0 0 4px rgba(193, 18, 31, 0.25), ' +
+                            '0 0 12px rgba(193, 18, 31, 0.6)'
+                        );
+                        learnMoreBtn.style.boxShadow = shadowValue;
+                        learnMoreBtn.style.transform = 'scale(1.04)';
+                        setTimeout(() => {
+                            learnMoreBtn.style.boxShadow = (
+                                '0 0 0 0 rgba(0,0,0,0)'
+                            );
+                            learnMoreBtn.style.transform = 'scale(1.0)';
+                            pulses++;
+                            if (pulses < 3) {
+                                setTimeout(pulse, 200);
+                            } else {
+                                setTimeout(() => {
+                                    learnMoreBtn.style.transition = (
+                                        originalTransition
+                                    );
+                                    learnMoreBtn.style.boxShadow = (
+                                        originalBoxShadow
+                                    );
+                                    learnMoreBtn.style.transform = (
+                                        originalTransform
+                                    );
+                                }, 600);
+                            }
+                        }, 450);
+                    };
+                    pulse();
+                }
+            });
         }
 
         // Match heights: set result panel height equal to left tool panel height
@@ -503,7 +559,10 @@ termsAcceptBtn.addEventListener('click', async () => {
     } catch (error) {
         console.error("Error:", error);
         resultTitle.textContent = "Error!";
-        resultMessage.textContent = "There was an issue connecting to the server. Please try again later.";
+        resultMessage.textContent = (
+            "There was an issue connecting to the server. " +
+            "Please try again later."
+        );
     }
 });
 
@@ -525,21 +584,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const featureGlossary = document.getElementById('feature-glossary');
 
     if (featureLearnMoreBtn && featureGlossary) {
-    // Set initial label to match current visibility
-    const isHiddenInit = getComputedStyle(featureGlossary).display === 'none';
-    featureLearnMoreBtn.textContent = isHiddenInit ? 'Learn More About Features' : 'Hide Features';
-    
-    featureLearnMoreBtn.addEventListener('click', () => {
-    const isHidden = getComputedStyle(featureGlossary).display === 'none';
-    featureGlossary.style.display = isHidden ? 'block' : 'none';
-    featureLearnMoreBtn.textContent = isHidden ? 'Hide Features' : 'Learn More About Features';
-    
-    // Scroll to glossary if showing
-    if (isHidden) {
-    setTimeout(() => {
-    featureGlossary.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
-    }
-    });
+        // Set initial label to match current visibility
+        const isHiddenInit = (
+            getComputedStyle(featureGlossary).display === 'none'
+        );
+        featureLearnMoreBtn.textContent = isHiddenInit
+            ? 'Learn More About Features'
+            : 'Hide Features';
+
+        featureLearnMoreBtn.addEventListener('click', () => {
+            const isHidden = (
+                getComputedStyle(featureGlossary).display === 'none'
+            );
+            featureGlossary.style.display = isHidden ? 'block' : 'none';
+            featureLearnMoreBtn.textContent = isHidden
+                ? 'Hide Features'
+                : 'Learn More About Features';
+
+            // Scroll to glossary if showing
+            if (isHidden) {
+                setTimeout(() => {
+                    featureGlossary.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }, 100);
+            }
+        });
     }
 });
