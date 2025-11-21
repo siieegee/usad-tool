@@ -30,6 +30,7 @@ for resource in NLTK_RESOURCES:
 
 # Constants
 MODELS_DIR_NAME = "models"
+PRODUCTION_MODELS_DIR = "production-models"
 TFIDF_MODEL_FILE = "tfidf_vectorizer.pkl"
 SCALER_MODEL_FILE = "enhanced_feature_scaler.pkl"
 SVD_MODEL_FILE = "best_run_svd.pkl"
@@ -43,13 +44,14 @@ NORMALIZATION_NORM = 'l2'
 
 def get_models_directory():
     """
-    Get the directory where models are stored.
+    Get the directory where production models are stored.
 
     Returns:
-        str: Path to the models directory
+        str: Path to the production models directory
     """
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(base_dir, MODELS_DIR_NAME)
+    models_dir = os.path.join(base_dir, MODELS_DIR_NAME)
+    return os.path.join(models_dir, PRODUCTION_MODELS_DIR)
 
 
 def load_models():
