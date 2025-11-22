@@ -1,3 +1,60 @@
+"""
+Program Title:
+baseline_kmeans.py – Baseline SVD + KMeans Clustering Module for the USAD (UnSupervised Anomaly Detection) Tool
+
+Programmers:
+Cristel Jane Baquing, Angelica Jean Evangelista, James Tristan Landa, Kharl Chester Velasco
+
+Where the Program Fits in the General System Design:
+This module belongs to the Baseline Modeling Component of the USAD system. Before applying advanced
+optimization algorithms (e.g., PSO, DBSCAN selection, enhanced distance metrics), this script generates 
+a classical baseline anomaly detection model using TruncatedSVD for dimensionality reduction and KMeans 
+for vector-space clustering. It also automatically prepares preprocessing outputs, feature matrices, 
+and data splits by calling other pipeline modules if needed, ensuring the entire model-building flow 
+remains synchronized.
+
+Date Written and Revised:
+Original version: November 22, 2025  
+Last revised: November 22, 2025
+
+Purpose:
+To build and evaluate a baseline unsupervised anomaly detector using:
+• TruncatedSVD for reducing TF-IDF vectors to dense embeddings.  
+• ℓ₂-normalized feature spaces for cosine-based clustering.  
+• KMeans for obtaining cluster assignments and centroid vectors.  
+• Distance-to-centroid scoring for anomaly detection.  
+• Automatic threshold optimization using training F1-maximization.  
+• Integrated evaluation report generation for comparison with optimized models.
+
+The baseline provides a reference point used to measure improvement when advanced optimized
+models are applied later in the pipeline.
+
+Data Structures, Algorithms, and Control:
+• Data Structures:
+  - Sparse matrices X_train.npz and X_test.npz loaded from feature-matrices/.  
+  - train_data.csv and test_data.csv containing labels and metadata.  
+  - Pandas DataFrames enriched with cluster assignments and centroid distances.  
+  - Serialized model artifacts (centroids, SVD, threshold) saved under baseline-models/.  
+  - Baseline evaluation CSVs saved to baseline-data/.  
+  - JSON evaluation report in evaluation-reports/.
+
+• Algorithms:
+  - TruncatedSVD (Scikit-learn) for dimensionality reduction.  
+  - ℓ₂ normalization for cosine compatibility.  
+  - KMeans clustering (k=8 by default) for unsupervised grouping.  
+  - Cosine distance formula: distance = 1 − dot(z, centroid).  
+  - Threshold sweep across 200 steps to maximize F1 (Anomalous as positive class).  
+  - Centroid nearest-distance inference for test predictions.  
+  - Evaluation summary via shared run_full_evaluation() utility.
+
+• Control:
+  - Automatically executes text_preprocessing.py if processed_reviews.csv is missing.  
+  - Automatically executes feature_extraction.py if feature matrices are missing.  
+  - Runs the full baseline model pipeline end-to-end when executed as __main__.  
+  - Saves all artifacts and produces evaluation report without user intervention.  
+  - Returns clean, standardized DataFrames used for further model comparison.
+"""
+
 import os
 import subprocess
 import numpy as np

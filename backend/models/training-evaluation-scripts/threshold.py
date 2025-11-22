@@ -1,4 +1,54 @@
 """
+Program Title:
+threshold.py – Threshold Optimization Module for USAD (UnSupervised Anomaly Detection) Tool
+
+Programmers:
+Cristel Jane Baquing, Angelica Jean Evangelista, James Tristan Landa, Kharl Chester Velasco
+
+Where the Program Fits in the General System Design:
+This script functions as a post-modeling evaluation and optimization module in the USAD system pipeline. 
+After clustering and centroid-based anomaly scoring have been completed, this script recalculates and 
+searches for the best-performing anomaly threshold using the test dataset. It updates model files stored 
+in production-models/ and synchronizes predictions in best-run-data/. This is intended to be executed 
+before deploying the review_prediction.py inference script.
+
+Date Written and Revised:
+Original version: November 21, 2025  
+Last revised: November 21, 2025
+
+Purpose:
+To automatically determine the optimal anomaly threshold for the USAD system by:
+• Evaluating the current threshold against the test set.  
+• Performing a fine-grained sweep across 500 possible thresholds.  
+• Selecting the threshold that yields the maximum F1-score.  
+• Comparing performance before vs. after optimization.  
+• Saving the improved threshold and updated predictions for deployment.  
+• Supporting optional creation of visualization plots to illustrate threshold effects.
+
+Data Structures, Algorithms, and Control:
+• Data Structures:
+  - CSV files (best_run_test.csv, best_run_train.csv) for evaluation datasets.  
+  - Pickle models (best_run_threshold.pkl) for threshold storage.  
+  - NumPy arrays for predictions, metrics, and threshold sweeps.  
+  - Directory paths: production-models/, best-run-data/, visualizations/.
+
+• Algorithms:
+  - Threshold sweep using 500 evenly spaced values from min to max distance.  
+  - Computation of evaluation metrics: F1-score, precision, recall, accuracy.  
+  - Confusion matrix generation for before/after comparison.  
+  - Best-threshold selection based on maximizing F1-score.  
+  - Optional visualization: Metrics vs. Threshold and Distance Distributions.
+
+• Control:
+  - Loads best-run test data and the current threshold.  
+  - Performs evaluation using detailed_metrics() and run_full_evaluation().  
+  - Asks user confirmation before saving new threshold.  
+  - Updates predictions and saves new model metadata.  
+  - Handles missing training data gracefully.  
+  - Generates visualization only if explicitly requested by the user.
+"""
+
+"""
 Quick Threshold Optimization Script
 This will find the optimal threshold and update your model files
 Run this BEFORE using review_prediction.py

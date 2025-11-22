@@ -1,3 +1,50 @@
+"""
+Program Title:
+compare_models_plot.py – Unified Model Performance Comparison Plot Generator
+
+Programmers:
+Cristel Jane Baquing, Angelica Jean Evangelista, James Tristan Landa, Kharl Chester Velasco
+
+Where the Program Fits in the General System Design:
+This module belongs to the Visualization and Reporting Component of the USAD (UnSupervised Anomaly 
+Detection) system. It processes evaluation outputs from baseline, clustering, and proposed hybrid models, 
+and generates comparative performance visualizations across multiple metrics. These plots help developers 
+and analysts assess differences in model behavior and improvements achieved by optimized or hybrid 
+approaches.
+
+Date Written and Revised:
+Original version: November 22, 2025
+Last revised: November 22, 2025
+
+Purpose:
+To generate a single consolidated PNG visualization comparing multiple models (DBSCAN, KMeans, and 
+Proposed Model) using performance metrics sourced from evaluation_report.json and manually supplied 
+baseline results.  
+The visualization supports:
+• Accuracy comparison  
+• Precision comparison  
+• Recall comparison  
+• F1-score comparison  
+The output image is automatically saved in visualizations/.
+
+Data Structures, Algorithms, and Control:
+• Data Structures:
+  - JSON evaluation report loaded from evaluation-reports/evaluation_report.json  
+  - Python dictionaries storing model names and metric values  
+  - Automatically generated directories for visualization outputs  
+
+• Algorithms:
+  - Iterative metric extraction and bar-plot generation using Matplotlib  
+  - Automatic label formatting and dynamic y-axis scaling  
+  - Grid-style visualization layout with four metric-specific subplots in a single figure  
+
+• Control:
+  - Resolves base directory using relative script path  
+  - Safely creates the visualizations directory if missing  
+  - main() orchestrates the loading of evaluation metrics and the creation of the consolidated figure  
+  - Saves the final PNG file compare_models_overview.png into the visualizations/ folder  
+"""
+
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns

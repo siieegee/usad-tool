@@ -1,3 +1,56 @@
+"""
+Program Title:
+evaluation_utils.py – Comprehensive Evaluation & Diagnostic Module for USAD (UnSupervised Anomaly Detection) Tool
+
+Programmers:
+Cristel Jane Baquing, Angelica Jean Evangelista, James Tristan Landa, Kharl Chester Velasco
+
+Where the Program Fits in the General System Design:
+This module is part of the Model Assessment and Validation Stage of the USAD system. It provides extensive
+performance diagnostics for the currently selected clustering model and threshold. It loads evaluation
+datasets from the best-run processing pipeline, applies the active anomaly threshold, computes performance
+scores, studies distance distributions, evaluates ROC and PR characteristics, performs threshold sensitivity
+analysis, and optionally conducts cluster-level diagnostics. It is primarily used for validating production-
+ready models stored under production-models/ and producing detailed evaluation reports in evaluation-reports/.
+
+Date Written and Revised:
+Original version: November 22, 2025  
+Last revised: November 22, 2025
+
+Purpose:
+To perform a deep, structured evaluation of the USAD model by:
+• Measuring classification performance on training and test datasets.  
+• Generating confusion matrices with human-readable interpretations.  
+• Computing ROC-AUC and PR-AUC using continuous distances.  
+• Analyzing Normal vs. Anomalous distance separation.  
+• Running threshold sensitivity analysis to identify the best F1-based threshold.  
+• Evaluating cluster quality and anomaly density if cluster labels are available.  
+• Producing a JSON evaluation report suitable for documentation and deployment checks.
+
+Data Structures, Algorithms, and Control:
+• Data Structures:
+  - Pandas DataFrames loaded from best_run_train.csv and best_run_test.csv.  
+  - Numpy arrays for predictions and threshold sweeps.  
+  - Python dictionaries for evaluation metadata.  
+  - JSON evaluation file saved to evaluation-reports/ (if specified).  
+  - Optional per-cluster summary tables using groupby().
+
+• Algorithms:
+  - Classification metrics via scikit-learn (Accuracy, Precision, Recall, F1).  
+  - Confusion matrix generation with TP/TN/FP/FN interpretation.  
+  - ROC-AUC and Average Precision computation using continuous anomaly distances.  
+  - Threshold sweep across 50 candidate thresholds to identify optimal F1.  
+  - Class separation estimation using Normal/Anomalous mean distance ratio.  
+  - Optional cluster quality assessment: anomaly ratio, mean/STD distance, cluster size.
+
+• Control:
+  - Applies the active threshold to generate predictions.  
+  - Prints clear section headers and diagnostic summaries for readability.  
+  - Handles cases where cluster labels may not be available.  
+  - Saves evaluation metadata to JSON if a path is provided.  
+  - Returns a fully serialized Python-native evaluation dictionary for downstream use.
+"""
+
 import numpy as np
 import pandas as pd
 import seaborn as sns

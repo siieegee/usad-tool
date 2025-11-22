@@ -1,3 +1,56 @@
+"""
+Program Title:
+feature_extraction.py - Feature Engineering & Vectorization Module for USAD (UnSupervised Anomaly Detection) Tool
+
+Programmers:
+Cristel Jane Baquing, Angelica Jean Evangelista, James Tristan Landa, Kharl Chester Velasco
+
+Where the Program Fits in the General System Design:
+This Python script serves as a core backend component of the USAD system responsible for generating the
+feature matrices required for anomaly detection modeling. It loads preprocessed reviews, computes
+hand-crafted linguistic and statistical features, generates TF-IDF vector representations, performs
+scaling, splits the dataset into train/test partitions, and exports all matrices and models used in
+downstream anomaly detection. It works alongside preprocessing scripts, model training modules, and
+the production-grade inference pipeline.
+
+Date Written and Revised:
+Original version: October 14, 2025
+Last revised: November 20, 2025
+
+Purpose:
+To provide a complete feature engineering workflow that:
+• Loads preprocessed text data from the training-data directory.
+• Converts token sequences into quantifiable linguistic features.
+• Computes sentiment, entropy, punctuation metrics, and text complexity features.
+• Generates TF-IDF vectors with n-gram support (1–3).
+• Combines sparse TF-IDF matrices with scaled enhanced features.
+• Splits data into train/test subsets (label-aware when available).
+• Saves vectorizers, scalers, matrices, and datasets for further model training.
+This module ensures structured, consistent, and reproducible feature extraction across the USAD system.
+
+Data Structures, Algorithms, and Control:
+• Data Structures:
+  - Pandas DataFrame holding original, processed text, labels, and engineered features.
+  - Sparse matrices (CSR format) for TF-IDF vectors and scaled numerical features.
+  - Pickle model files for vectorizers and scalers.
+  - Directory hierarchy: production-models/, feature-matrices/, training-data/.
+
+• Algorithms:
+  - Token-based linguistic feature computation (length, diversity, entropy, etc.).
+  - Sentiment analysis using TextBlob polarity and subjectivity scores.
+  - Punctuation and capitalization pattern analysis.
+  - TF-IDF vectorization with 1–3 n-grams, max_features=20,000, min_df=2.
+  - StandardScaler applied to numerical enhanced features.
+  - Horizontal matrix concatenation (TF-IDF + enhanced features).
+
+• Control:
+  - Automatic directory creation for outputs.
+  - Data type restoration for token lists using ast.literal_eval().
+  - Stratified or random train/test splitting depending on label availability.
+  - Saving outputs: X_train.npz, X_test.npz, TF-IDF model, scaler, and CSV datasets.
+  - Console logs for progress tracking, shapes, vocabulary size, and feature stats.
+"""
+
 import os
 import pandas as pd
 import numpy as np

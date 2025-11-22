@@ -1,4 +1,61 @@
 """
+Program Title:
+main.py – FastAPI Backend Application for the USAD (UnSupervised Anomaly Detection) Review Prediction System
+
+Programmers:
+Cristel Jane Baquing, Angelica Jean Evangelista, James Tristan Landa, Kharl Chester Velasco
+
+Where the Program Fits in the General System Design:
+This module functions as the primary backend API layer of the USAD system. It provides REST endpoints 
+for predicting whether a given review is Normal or Anomalous using the trained anomaly detection 
+pipeline implemented in review_prediction.py. The FastAPI server serves as the bridge between the 
+machine learning components and external clients such as the web-based frontend, third-party systems, 
+or automated evaluation scripts.
+
+Additionally, this module hosts static frontend assets, delivers model feature-basis data for UI 
+visualization, supports Single Page Application routing, and exposes a health check for service 
+monitoring.
+
+Date Written and Revised:
+Original version: November 22, 2025  
+Last revised: November 22, 2025
+
+Purpose:
+To deploy a production-ready API for real-time anomaly detection of text reviews by:
+• Accepting raw review text through a structured request model  
+• Executing preprocessing, vectorization, feature projection, centroid distance scoring, and threshold-based classification  
+• Returning detailed prediction metadata such as cluster ID, distance, threshold, processed text, and feature contributions  
+• Serving feature basis information for frontend model explanation  
+• Optionally hosting static frontend files and enabling SPA routing  
+• Providing CORS support for external clients  
+
+This API enables seamless integration of the USAD model into web interfaces, dashboards, and automated 
+workflows.
+
+Data Structures, Algorithms, and Control:
+• Data Structures:
+  - Pydantic models (ReviewRequest, ReviewResponse) for input/output validation  
+  - JSON feature_basis.json for model interpretability  
+  - Static frontend directory mounted for UI assets  
+
+• Algorithms:
+  - Delegated prediction logic via predict_review()  
+  - Preprocessing and feature extraction defined in the model pipeline  
+  - Cosine-distance scoring and threshold comparison from the trained model  
+  - SPA routing logic for serving index.html as fallback  
+
+• Control:
+  - CORS middleware for controlled cross-origin requests  
+  - /health endpoint for system monitoring  
+  - /api/predict endpoint for main model inference  
+  - /api/feature-basis endpoint for interpretability metadata  
+  - Static file mounting for frontend delivery  
+  - Catch-all route to support browser-based navigation in SPAs  
+
+This module is the core operational gateway of the USAD review prediction platform.
+"""
+
+"""
 FastAPI application for USAD Review Prediction API
 """
 import os

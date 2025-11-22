@@ -1,3 +1,60 @@
+"""
+Program Title:
+pso_kmeans.py - PSO-Enhanced DBSCAN + K-Means Clustering Pipeline for USAD (UnSupervised Anomaly Detection) Tool
+
+Programmers:
+Cristel Jane Baquing, Angelica Jean Evangelista, James Tristan Landa, Kharl Chester Velasco
+
+Where the Program Fits in the General System Design:
+This Python script serves as the core anomaly detection engine of the USAD system. It loads feature matrices
+generated from the preprocessing and feature-extraction modules, performs dimensionality reduction, executes
+hybrid clustering (DBSCAN + PSO-optimized K-Means), computes centroid distances, determines anomaly thresholds,
+evaluates model performance, and outputs the results used for production deployment. It works together with
+the entire backend pipeline: preprocessing, feature engineering, evaluation modules, and the frontend interface.
+
+Date Written and Revised:
+Original version: October 14, 2025  
+Last revised: November 20, 2025
+
+Purpose:
+To provide a complete anomaly detection workflow that:
+• Loads training and test feature matrices.  
+• Applies dimensionality reduction using Truncated SVD.  
+• Performs density-based clustering (DBSCAN) to identify core and ambiguous samples.  
+• Applies PSO to find optimal K and optimized centroids for ambiguous points.  
+• Executes final K-Means clustering with PSO-optimized centroids.  
+• Computes cosine-distance–based anomaly scores for all samples.  
+• Automatically selects the best anomaly threshold using F1 optimization.  
+• Performs full evaluation on both training and test sets.  
+• Saves best-run results, centroids, SVD models, and thresholds for production use.  
+This module constitutes the heart of the USAD anomaly detection model pipeline.
+
+Data Structures, Algorithms, and Control:
+• Data Structures:
+  - Sparse matrices (.npz) for training and test features.  
+  - Pandas DataFrames for feature-label organization and evaluation output.  
+  - NumPy arrays for reduced-dimensionality vectors and centroid computations.  
+  - Pickled model files (.pkl) for SVD objects, centroids, and thresholds.  
+  - Directory paths: production-models/, best-run-data/, feature-matrices/, training-data/.
+
+• Algorithms:
+  - Dimensionality reduction with TruncatedSVD (L2 normalized for cosine similarity).  
+  - DBSCAN clustering to identify core vs. ambiguous points.  
+  - PSO search for optimal number of clusters (K) for ambiguous points.  
+  - PSO-based centroid optimization minimizing SSE.  
+  - MiniBatchKMeans with optimized centroids for final cluster labeling.  
+  - Cosine-distance computation for anomaly scoring.  
+  - Threshold optimization using F1-maximization.
+
+• Control:
+  - Automatic directory detection relative to the script location.  
+  - Random seed fixing for reproducibility.  
+  - Conditional PSO execution depending on the number of ambiguous samples.  
+  - Structured phase-by-phase logs to track progress.  
+  - Full evaluation through run_full_evaluation() for consistent reporting.  
+  - Saves all outputs to production-models/ and best-run-data directories.
+"""
+
 import os
 import numpy as np
 import pandas as pd

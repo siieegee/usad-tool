@@ -1,4 +1,65 @@
 """
+Program Title:
+review_prediction.py – Review Preprocessing, Feature Extraction, and Anomaly Prediction Module for the USAD System
+
+Programmers:
+Cristel Jane Baquing, Angelica Jean Evangelista, James Tristan Landa, Kharl Chester Velasco
+
+Where the Program Fits in the General System Design:
+This module serves as the core machine learning and NLP engine of the USAD (UnSupervised Anomaly 
+Detection) review analysis pipeline. All preprocessing, linguistic normalization, feature computation, 
+vectorization, dimensionality reduction, centroid comparison, and final anomaly scoring are handled 
+here.
+
+It directly supports the FastAPI backend (app.py) by providing the predict_review() function, which 
+executes the full trained model pipeline and returns structured prediction outputs for external systems 
+and the frontend UI. This module loads all production models (TF-IDF, SVD, Scaler, Centroids, Threshold) 
+and applies the same workflow used during training to ensure prediction consistency.
+
+Date Written and Revised:
+Original version: November 22, 2025  
+Last revised: November 22, 2025
+
+Purpose:
+To implement the full machine learning pipeline for detecting anomalous customer reviews by:
+• Cleaning, tokenizing, and lemmatizing incoming text  
+• Extracting enhanced lexical, statistical, structural, and sentiment features  
+• Combining TF-IDF vectors with engineered features  
+• Applying scaler and dimensionality reduction transformations  
+• Computing cosine similarity between review embeddings and cluster centroids  
+• Comparing cosine distance against a learned anomaly threshold  
+• Returning cluster ID, distance score, threshold, confidence, processed text, and all extracted features  
+
+This module is the heart of the USAD anomaly detection system, enabling efficient and accurate 
+real-time classification.
+
+Data Structures, Algorithms, and Control:
+• Data Structures:
+  - NLTK resources for tokenization, POS tagging, and lemmatization  
+  - Dictionaries for extracted features  
+  - Sparse matrices for TF-IDF and enhanced feature merging  
+  - Stored joblib model files for production inference  
+
+• Algorithms:
+  - Text cleaning, POS-aware lemmatization  
+  - Lexical diversity, entropy, repetition scoring  
+  - Sentiment polarity/subjectivity via TextBlob  
+  - TF-IDF vectorization combined with engineered features  
+  - SVD-based dimensionality reduction  
+  - L2-normalization and cosine similarity to centroids  
+  - Threshold-based anomaly classification with confidence scoring  
+
+• Control:
+  - Automatic loading of production models on module import  
+  - Fallback diagnostic printing if loading fails  
+  - predict_review() as the main entry point for the FastAPI service  
+  - __main__ test block for easy console-based debugging  
+
+This module encapsulates the complete inference logic for anomaly detection in the USAD review analysis tool.
+"""
+
+
+"""
 Review prediction module for USAD Tool
 """
 import os

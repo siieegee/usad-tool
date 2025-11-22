@@ -1,3 +1,50 @@
+"""
+Program Title:
+text_preprocessing.py - Text Preprocessing Script for USAD (Unsupervised Anomaly Detection) Tool
+
+Programmers:
+Cristel Jane Baquing, Angelica Jean Evangelista, James Tristan Landa, Kharl Chester Velasco
+
+Where the Program Fits in the General System Design:
+This Python script performs the text preprocessing phase for the USAD system. It loads the raw review
+dataset, applies multiple NLP preprocessing techniques (cleaning, tokenization, stopword removal,
+lemmatization), and outputs the processed dataset for use in the anomaly detection model. It is part of
+the backend training pipeline and works alongside the main training-evaluation scripts.
+
+Date Written and Revised:
+Original version: October 14, 2025
+Last revised: November 20, 2025
+
+Purpose:
+- Load raw product review data for preprocessing.
+- Clean text by converting lowercase, removing punctuation and emojis.
+- Tokenize reviews into individual tokens.
+- Remove English stopwords.
+- Apply POS-tagged lemmatization for improved NLP accuracy.
+- Save the processed dataset for feature extraction and model training.
+This script improves data quality and ensures consistent preprocessing across the USAD system.
+
+Data Structures, Algorithms, and Control:
+
+- Data Structures:
+  * Pandas DataFrame for loading, processing, and saving the dataset.
+  * Token lists generated during preprocessing.
+  * File paths for directory management.
+
+- Algorithms:
+  * Cleaning: lowercase conversion, punctuation and emoji removal via regex.
+  * Tokenization: using NLTK's word_tokenize().
+  * Stopword removal: NLTK English stopword list.
+  * POS-tagged lemmatization using WordNetLemmatizer.
+  * NLP utility functions (POS mapping → WordNet format).
+
+- Control:
+  * NLTK resources are automatically downloaded at runtime.
+  * Preprocessing pipeline is applied per review using DataFrame .apply().
+  * Final processed CSV is saved into the training-data directory.
+  * Script prints dataset statistics and verification logs.
+"""
+
 import os
 import pandas as pd
 import re

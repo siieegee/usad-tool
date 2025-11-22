@@ -1,3 +1,64 @@
+"""
+Program Title:
+baseline_dbscan_pipiline.py – Baseline SVD + DBSCAN Clustering Module for the USAD (UnSupervised Anomaly Detection) Tool
+
+Programmers:
+Cristel Jane Baquing, Angelica Jean Evangelista, James Tristan Landa, Kharl Chester Velasco
+
+Where the Program Fits in the General System Design:
+This module is part of the Baseline Modeling Component of the USAD system. It constructs a purely 
+unsupervised anomaly detection model by combining dimensionality reduction (TruncatedSVD) with 
+density-based clustering (DBSCAN). The module automatically handles data availability checks, executes 
+preprocessing and feature extraction when required, generates DBSCAN cluster assignments, computes 
+centroid representations for non-noise clusters, derives anomaly scores using cosine distance, and 
+performs threshold optimization for classification.
+
+Date Written and Revised:
+Original version: November 22, 2025  
+Last revised: November 22, 2025
+
+Purpose:
+To create a baseline anomaly detection model using:
+• TruncatedSVD to generate dense, low-dimensional semantic embeddings from TF-IDF vectors.  
+• ℓ₂ normalization to ensure cosine-distance compatibility.  
+• DBSCAN for density-based clustering of review embeddings without requiring a fixed number of clusters.  
+• Centroid estimation for non-noise clusters and fallback mechanisms for noise points.  
+• Anomaly scoring via distance-to-centroid.  
+• Train-set threshold optimization to maximize F1 score for identifying anomalous (CG) reviews.  
+• Integrated evaluation using the shared run_full_evaluation() utility.
+
+This baseline performance serves as a benchmark for later PSO-optimized models and advanced hybrid 
+clustering configurations.
+
+Data Structures, Algorithms, and Control:
+• Data Structures:
+  - Sparse TF-IDF matrices: X_train.npz and X_test.npz.  
+  - CSV metadata: train_data.csv, test_data.csv.  
+  - Pandas DataFrames augmented with DBSCAN cluster labels and distance scores.  
+  - Centroid arrays for each non-noise cluster.  
+  - Serialized artifacts stored in baseline-dbscan-models/.  
+  - Baseline cluster/data outputs stored in baseline-dbscan-data/.  
+  - JSON evaluation report saved in evaluation-reports/.
+
+• Algorithms:
+  - TruncatedSVD: Reduces dimensionality while preserving semantic variance.  
+  - ℓ₂ normalization: Ensures cosine similarity correctness.  
+  - DBSCAN: Groups dense points into clusters and labels sparse points as noise (–1).  
+  - Custom centroid computation for all non-noise clusters.  
+  - Anomaly scoring:  
+        distance = 1 − cosine_similarity(z, centroid)  
+  - Threshold sweep across 200 values to maximize F1 for Anomalous class.  
+  - Noise handling: nearest-centroid assignment for inference and threshold comparison.  
+  - Complete train/test evaluation with run_full_evaluation().
+
+• Control:
+  - Automatically triggers text_preprocessing.py if processed_reviews.csv is missing.  
+  - Automatically triggers feature_extraction.py if feature matrices are absent.  
+  - Runs full baseline DBSCAN pipeline when executed as main.  
+  - Saves all model artifacts, cluster outputs, and evaluation results automatically.  
+  - Ensures consistent preprocessing alignment across all baseline and optimized models.
+"""
+
 import os
 import subprocess
 import numpy as np

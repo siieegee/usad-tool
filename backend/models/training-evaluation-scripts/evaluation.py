@@ -1,3 +1,58 @@
+"""
+Program Title:
+evaluation.py – Full Evaluation & Diagnostic Module for USAD (UnSupervised Anomaly Detection) Tool
+
+Programmers:
+Cristel Jane Baquing, Angelica Jean Evangelista, James Tristan Landa, Kharl Chester Velasco
+
+Where the Program Fits in the General System Design:
+This script serves as the full post-training evaluation module of the USAD system. It analyzes the
+performance of the best-run clustering model using both the training and test datasets, evaluates the
+current production threshold, and generates a comprehensive technical diagnostic report. This module
+belongs to the Model Assessment Stage and directly consumes outputs stored in best-run-data/ and
+production-models/. It also generates evaluation reports saved in evaluation-reports/ for documentation
+and future debugging.
+
+Date Written and Revised:
+Original version: November 22, 2025  
+Last revised: November 22, 2025
+
+Purpose:
+To provide a complete, multi-level performance evaluation of the USAD model by:
+• Computing training and test classification metrics (accuracy, precision, recall, F1).  
+• Generating confusion matrices with interpretations.  
+• Measuring ROC curves, AUC scores, and PR curve metrics.  
+• Examining Normal vs. Anomalous distance distribution separation.  
+• Running threshold sensitivity analysis to determine optimal F1-based thresholds.  
+• Analyzing cluster quality and anomaly density per cluster.  
+• Producing recommendations for tuning, retraining, or deployment readiness.  
+• Saving a machine-readable evaluation_report.json for documentation and integration.
+
+Data Structures, Algorithms, and Control:
+• Data Structures:
+  - CSV files (best_run_train.csv, best_run_test.csv) loaded as Pandas DataFrames.  
+  - Pickle file containing the best-run threshold.  
+  - NumPy arrays for distances, predictions, and threshold sweeps.  
+  - JSON report automatically generated into evaluation-reports/.  
+  - Cluster summary tables via DataFrame groupby().
+
+• Algorithms:
+  - Classification metric computation using scikit-learn.  
+  - ROC, AUC, PR curve calculations using continuous distance scores.  
+  - Threshold sweep using 50 candidate thresholds for sensitivity testing.  
+  - Ratio-based distance separation evaluation for class spread.  
+  - Cluster-level anomaly density and distance statistics aggregation.  
+  - Automatic grading system based on aggregated evaluation scores.
+
+• Control:
+  - Automatically locates correct project directory structure regardless of script location.  
+  - Loads production threshold and generates new predictions for evaluation.  
+  - Prints sectioned, organized output for terminal readability.  
+  - Saves the full evaluation JSON in evaluation-reports/ with all metrics converted to native types.  
+  - Ensures directories are created if missing.  
+  - Final output includes deployment readiness assessment and recommendations.
+"""
+
 import sys
 import os
 
