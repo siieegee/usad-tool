@@ -1,3 +1,64 @@
+/*
+Program Documentation
+
+Program Title:
+script.js – Client-Side Logic for USAD Review Anomaly Detection Tool
+
+Programmers:
+Cristel Jane Baquing, Angelica Jean Evangelista, James Tristan Landa, Kharl Chester Velasco
+
+Where the Program Fits in the General System Design:
+This JavaScript file provides all client-side logic for the USAD system. It connects the HTML page to the backend model, handles user interactions,
+runs client-side feature analysis, updates the results panel dynamically, controls modals, toggles technical details, handles glossary controls, and
+manages layout synchronization. It acts as the functionality bridge between the interface (index.html) and the anomaly detection API.
+
+Date Written and Revised:
+Original version: October 14, 2025
+Last revised: November 20, 2025
+
+Purpose:
+The purpose of this script is to:
+• Handle the review submission process.
+• Show and manage the Terms & Conditions modal.
+• Send user review data to the backend API (/api/predict).
+• Receive prediction results and update the result panel.
+• Analyze features client-side to produce user-friendly explanations.
+• Display warnings, normal values, anomaly details, and confidence levels.
+• Control glossary toggling and technical detail sections.
+• Sync the heights between the input box and result panel for alignment.
+• Manage UI interactivity, scroll behavior, and tool responsiveness.
+
+Data Structures, Algorithms, and Control:
+
+• Data Structures:
+  - DOM references to UI components (buttons, textareas, panels, modals).
+  - FEATURE_PROFILES: thresholds for normal and suspicious patterns.
+  - FEATURE_DESCRIPTIONS: text explanations for each metric.
+  - FEATURE_LABELS: friendly UI names for technical fields.
+  - Objects storing prediction results, feature values, and analysis output.
+
+• Algorithms:
+  - analyzeFeatures(): evaluates features and returns detailed warnings,
+    severity categories, and insights.
+  - calculateFeatureContributions(): computes deviation from expected
+    thresholds and ranks features contributing most to anomaly score.
+  - syncResultPanelHeight(): ensures layout uniformity across tool sections.
+  - API request logic using fetch() to communicate with backend prediction API.
+
+• Control:
+  - Event listeners handle:
+        • Review submission
+        • Terms acceptance/decline
+        • Modal open/close
+        • Screen resizing for responsive UI
+        • Glossary visibility and detail toggling
+  - Dynamic HTML injection updates the result panel with tables, badges,
+    progress bars, tooltips, and structured warnings.
+  - Smooth scrolling and visual cues highlight glossary elements for users.
+  - Error handling catches server issues and displays fallback messages.
+*/
+
+
 // Grab DOM elements
 const termsModal = document.getElementById('terms-modal');
 const submitBtn = document.getElementById('submit-btn');
@@ -8,7 +69,6 @@ const termsDeclineBtn = document.getElementById('terms-decline-btn');
 const resultTitle = document.getElementById('result-title');
 const resultMessage = document.getElementById('result-message');
 
-// Sync result panel height to match tool panel and enable only result scroll
 function syncResultPanelHeight() {
     const leftPanel = document.querySelector('.tool-box.left');
     const rightPanel = document.querySelector('.sticky-results .result-panel');
@@ -23,7 +83,7 @@ function syncResultPanelHeight() {
 window.addEventListener('load', syncResultPanelHeight);
 window.addEventListener('resize', syncResultPanelHeight);
 
-// ENHANCED: Define feature baselines and thresholds based on typical patterns
+// Define feature baselines and thresholds based on typical patterns
 const FEATURE_PROFILES = {
     normal: {
         review_length: { min: 10, max: 200, optimal: 50 },
@@ -97,7 +157,7 @@ async function loadFeatureBasis() {
 
 loadFeatureBasis();
 
-// ENHANCED: Analyze features and generate specific reasons
+// Analyze features and generate specific reasons
 function analyzeFeatures(features, prediction) {
     const reasons = [];
     const warnings = [];
@@ -212,7 +272,7 @@ function analyzeFeatures(features, prediction) {
     return { reasons, warnings };
 }
 
-// ENHANCED: Calculate feature contribution to anomaly score
+// Calculate feature contribution to anomaly score
 function calculateFeatureContributions(features) {
     const contributions = [];
     const profile = FEATURE_PROFILES.normal;
@@ -300,7 +360,7 @@ termsAcceptBtn.addEventListener('click', async () => {
         const confidence = Number(result.confidence || 0);
         const features = result.features || {};
 
-        // ENHANCED: Analyze features with detailed reasoning
+        // Analyze features with detailed reasoning
         const analysis = analyzeFeatures(features, result.prediction);
         const contributions = calculateFeatureContributions(features);
         
@@ -553,7 +613,7 @@ termsAcceptBtn.addEventListener('click', async () => {
         const rightPanel = document.querySelector('.sticky-results .result-panel');
         if (leftPanel && rightPanel) {
             const leftHeight = leftPanel.getBoundingClientRect().height;
-            rightPanel.style.maxHeight = `${leftHeight - 54}px`; // account for title spacing
+            rightPanel.style.maxHeight = `${leftHeight - 54}px`;
             rightPanel.style.overflowY = 'auto';
         }
     } catch (error) {

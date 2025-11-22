@@ -1,3 +1,52 @@
+<!--
+Program Title:
+index.html - Frontend Interface for USAD (UnSupervised Anomaly Detection) Tool
+
+Programmers:
+Cristel Jane Baquing, Angelica Jean Evangelista, James Tristan Landa, Kharl Chester Velasco
+
+Where the Program Fits in the General System Design:
+This HTML file serves as the main front-end interface of the USAD system. It handles user interaction by providing input fields for product reviews,
+displaying anomaly detection results, and presenting instructions, features, team information, and terms & conditions. It works together with external
+CSS (/static/style.css) and JavaScript (/static/script.js) and interacts indirectly with the backend model that processes the anomaly detection.
+
+Date Written and Revised:
+Original version: October 14, 2025
+Last revised: November 20, 2025
+
+Purpose:
+To provide a structured, user-friendly interface where users can:
+• Enter product reviews for anomaly detection.
+• View classification results (Normal or Suspicious).
+• Understand the meaning of the detected features and results.
+• Navigate through project details, instructions, and team information.
+• Accept terms before processing reviews.
+This page supports the usability and accessibility of the entire USAD tool.
+
+Data Structures, Algorithms, and Control:
+• Data Structures:
+  - HTML sections for navigation, hero, features, review tool, instructions,
+  
+    results panel, feature glossary, team information, and modals.
+  - A textarea (#review-input) for capturing user review text.
+  - Result display containers (#result-title, #result-message).
+  - Modal window (#terms-modal) for user agreement.
+  
+• Algorithms:
+  - No algorithms are run inside this HTML file.
+  - All interactive logic (button events, modal controls, text validation,
+    result display updates) is implemented in /static/script.js.
+  - Backend performs unsupervised anomaly detection using ML techniques
+    such as clustering or reconstruction error evaluation.
+
+• Control:
+  - JavaScript triggers modal confirmation before processing input.
+  - “Submit” button event starts review validation and processing.
+  - Glossary toggle uses JS-controlled visibility.
+  - Sticky result panel remains visible during scrolling.
+  - Navigation uses anchor links for smooth page movement.
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

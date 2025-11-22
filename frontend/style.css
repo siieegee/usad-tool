@@ -1,3 +1,51 @@
+/*
+Program Title:
+styles.css - Frontend Stylesheet for USAD (UnSupervised Anomaly Detection) Tool
+
+Programmers:
+Cristel Jane Baquing, Angelica Jean Evangelista, James Tristan Landa, Kharl Chester Velasco
+
+Where the Program Fits in the General System Design:
+This stylesheet defines the visual layout, color theme, animations, spacing, and responsiveness of the USAD web interface. It controls the look and feel
+of every section, including the navigation bar, hero section, feature cards, tool panels, results panel, glossary, instructions, team section, and modals.
+It works together with index.html as the structural component and script.js as the interactive/functional layer.
+
+Date Written and Revised:
+Original version: October 14, 2025
+Last revised: November 20, 2025
+
+Purpose:
+The purpose of this stylesheet is to:
+• Provide a consistent visual identity for the USAD tool.
+• Define layout behavior for desktop and mobile devices.
+• Apply theme colors, spacing, typography, and responsiveness.
+• Style interactive components such as buttons, tool panels, cards, feature glossary sections, instructions, and scrollbars.
+• Support smooth animations.
+• Ensure accessibility and readability throughout the entire UI.
+
+Data Structures, Algorithms, and Control:
+• Data Structures:
+  - CSS custom properties (variables) for colors, spacing, and radius.
+  - Class-based component styles for buttons, cards, grid layouts,
+    tooltip icons, and feature glossary.
+  - Media queries for screen-size–dependent layouts.
+  - Animation keyframes for fade-in movement.
+
+• Algorithms:
+  - No computational algorithms. Only styling rules and transitions.
+  - Keyframe animation (fadeInUp) applies timed opacity and transform
+    changes to create smooth loading effects.
+
+• Control:
+  - CSS classes are triggered by HTML structure and JavaScript updates.
+  - Modals respond to "show" class added/removed via script.js.
+  - Result panel scrollbars are styled and controlled for overflow behavior.
+  - Layout adjusts automatically through Flexbox and CSS Grid.
+  - Responsive sections are controlled by @media queries for mobile devices.
+*/
+
+
+
 /* Reset & Base */
 * {
     margin: 0;
@@ -11,7 +59,7 @@ body {
 }
 html {
     scroll-behavior: smooth;
-    font-size: 90%; /* global scale down (e.g., 0.9x) */
+    font-size: 90%;
 }
 a {
     text-decoration: none;
@@ -158,9 +206,7 @@ nav {
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-/* =========================================================
-   🧩 TOOL SECTION FIXED ALIGNMENT
-   ========================================================= */
+/* Tool Section */
 #tool {
     background: var(--light-bg);
     padding: 160px 0;
@@ -170,7 +216,6 @@ nav {
     animation-delay: 0.6s;
 }
 
-/* ✅ Updated layout */
 .tool-grid {
     display: flex;
     flex-wrap: wrap;
@@ -197,11 +242,13 @@ nav {
     margin-bottom: 20px;
     color: var(--secondary-color);
 }
+
 .tool-box p {
     font-size: 1.3rem;
     max-width: 1000px;
     margin: 0 0 30px;
 }
+
 .tool-box textarea {
     width: 100%;
     height: 250px;
@@ -212,12 +259,14 @@ nav {
     margin-bottom: 20px;
     resize: vertical;
 }
+
 .input-label {
     display: block;
     font-weight: 600;
     margin: 8px 0 8px;
     color: var(--secondary-color);
 }
+
 .input-meta {
     display: flex;
     justify-content: flex-end;
@@ -225,6 +274,7 @@ nav {
     color: #666;
     font-size: 0.95rem;
 }
+
 .tool-box button {
     font-size: 1.2rem;
     background: var(--secondary-color);
@@ -287,8 +337,6 @@ nav {
     border-bottom: 1px solid rgba(0,0,0,0.1);
 }
 
-/* Remaining sections below (unchanged from your file) */
-
 /* Improved readability elements */
 .result-section { margin: 14px 0 16px; }
 .result-section-title {
@@ -350,7 +398,6 @@ nav {
     filter: brightness(0.95);
 }
 
-/* Friendly UX elements */
 .badge {
     display: inline-block;
     padding: 6px 12px;
@@ -398,8 +445,15 @@ nav {
     cursor: pointer;
     user-select: none;
 }
-.details-content { display: none; margin-top: 10px; }
-.details-content.show { display: block; }
+
+.details-content { 
+    display: none; 
+    margin-top: 10px; 
+}
+
+.details-content.show { 
+    display: block; 
+}
 
 /* Status tags for criteria */
 .status-tag {
@@ -675,6 +729,7 @@ nav {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 30px;
 }
+
 .team-cards .card {
     background: var(--card-bg);
     border-radius: var(--radius);
