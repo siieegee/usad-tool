@@ -28,22 +28,22 @@
     }
   },
   "roc_auc": {
-    "train": 0.2970418237471961,
-    "test": 0.2965450569654134
+    "train": 0.2970576861230977,
+    "test": 0.29653280929831877
   },
   "average_precision": {
-    "train": 0.38932483816861013,
-    "test": 0.388492667141562
+    "train": 0.38931889466899966,
+    "test": 0.38848372838082945
   },
   "distance_statistics": {
-    "train_separation": 0.6823025676856482,
-    "test_separation": 0.6770378172110458
+    "train_separation": 0.6823164259393923,
+    "test_separation": 0.6770102824193392
   },
   "threshold_analysis": {
-    "current_threshold": 0.018421719965582395,
-    "optimal_threshold": 0.036034193909827664,
+    "current_threshold": 0.017813002181716997,
+    "optimal_threshold": 0.03599390329085757,
     "current_f1": 0.6776251226692837,
     "current_accuracy": 0.5127016502874097,
-    "optimal_f1": 0.6777408637873754
+    "optimal_f1": 0.6775781442284027
   }
 }
