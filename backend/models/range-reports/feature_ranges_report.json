@@ -1,0 +1,202 @@
+{
+  "feature_ranges": {
+    "review_length": {
+      "name": "Length of Review",
+      "normal_min": 9.994191942920176,
+      "normal_max": 26.509915770452714
+    },
+    "lexical_diversity": {
+      "name": "Word Variety",
+      "normal_min": 0.825635412884938,
+      "normal_max": 1.0325093399244722
+    },
+    "avg_word_length": {
+      "name": "Average Word Length",
+      "normal_min": 4.255585254956413,
+      "normal_max": 6.031743985769614
+    },
+    "sentiment_polarity": {
+      "name": "Overall Tone",
+      "normal_min": -0.08729892057925498,
+      "normal_max": 0.6179141982392773
+    },
+    "sentiment_subjectivity": {
+      "name": "Opinion Level",
+      "normal_min": 0.2790980583857928,
+      "normal_max": 0.810493066447974
+    },
+    "language_complexity": {
+      "name": "Language Complexity",
+      "normal_min": 58.94384472044334,
+      "normal_max": 98.57873418799548
+    },
+    "repetition_ratio": {
+      "name": "Word Repetition",
+      "normal_min": -0.032509339924472164,
+      "normal_max": 0.17436458711506198
+    },
+    "exclamation_count": {
+      "name": "Exclamation Marks",
+      "normal_min": -1.2567347825053925,
+      "normal_max": 2.0267028336236033
+    },
+    "question_count": {
+      "name": "Question Marks",
+      "normal_min": -0.3108382335709422,
+      "normal_max": 0.37062828377632784
+    },
+    "capital_usage": {
+      "name": "Capital Letter Usage",
+      "normal_min": -0.08467824124968795,
+      "normal_max": 0.10528886708512061
+    },
+    "punctuation_density": {
+      "name": "Punctuation Density",
+      "normal_min": -0.05814379295729921,
+      "normal_max": 0.5856026046641444
+    }
+  },
+  "feature_statistics": {
+    "review_length": {
+      "mean": 18.252053856686445,
+      "std": 5.505241275844178,
+      "min": 2.0,
+      "max": 38.0,
+      "p5": 11.0,
+      "p25": 14.0,
+      "p50": 17.0,
+      "p75": 23.0,
+      "p95": 28.0
+    },
+    "lexical_diversity": {
+      "mean": 0.9290723764047051,
+      "std": 0.06895797567984471,
+      "min": 0.5,
+      "max": 1.0,
+      "p5": 0.8,
+      "p25": 0.8888888888888888,
+      "p50": 0.9375,
+      "p75": 1.0,
+      "p95": 1.0
+    },
+    "avg_word_length": {
+      "mean": 5.143664620363014,
+      "std": 0.5920529102710667,
+      "min": 3.0,
+      "max": 8.23076923076923,
+      "p5": 4.25,
+      "p25": 4.7368421052631575,
+      "p50": 5.090909090909091,
+      "p75": 5.5,
+      "p95": 6.181818181818182
+    },
+    "sentiment_polarity": {
+      "mean": 0.2653076388300111,
+      "std": 0.23507103960617742,
+      "min": -1.0,
+      "max": 1.0,
+      "p5": -0.11655303030303028,
+      "p25": 0.11721688034188033,
+      "p50": 0.27113095238095236,
+      "p75": 0.41666666666666663,
+      "p95": 0.6333333333333333
+    },
+    "sentiment_subjectivity": {
+      "mean": 0.5447955624168834,
+      "std": 0.1771316693540604,
+      "min": 0.0,
+      "max": 1.0,
+      "p5": 0.25,
+      "p25": 0.44000000000000006,
+      "p50": 0.55,
+      "p75": 0.6599999999999999,
+      "p95": 0.8125
+    },
+    "language_complexity": {
+      "mean": 78.76128945421941,
+      "std": 13.21162982251738,
+      "min": 0.0,
+      "max": 100.0,
+      "p5": 54.82031446540881,
+      "p25": 71.13833333333336,
+      "p50": 80.30636363636367,
+      "p75": 87.93910714285717,
+      "p95": 98.29049019607845
+    },
+    "repetition_ratio": {
+      "mean": 0.0709276235952949,
+      "std": 0.06895797567984471,
+      "min": 0.0,
+      "max": 0.5,
+      "p5": 0.0,
+      "p25": 0.0,
+      "p50": 0.0625,
+      "p75": 0.1111111111111111,
+      "p95": 0.2
+    },
+    "exclamation_count": {
+      "mean": 0.38498402555910544,
+      "std": 1.094479205376332,
+      "min": 0.0,
+      "max": 24.0,
+      "p5": 0.0,
+      "p25": 0.0,
+      "p50": 0.0,
+      "p75": 0.0,
+      "p95": 2.0
+    },
+    "question_count": {
+      "mean": 0.029895025102692836,
+      "std": 0.22715550578242336,
+      "min": 0.0,
+      "max": 7.0,
+      "p5": 0.0,
+      "p25": 0.0,
+      "p50": 0.0,
+      "p75": 0.0,
+      "p95": 0.0
+    },
+    "capital_usage": {
+      "mean": 0.01030531291771633,
+      "std": 0.06332236944493619,
+      "min": 0.0,
+      "max": 1.0,
+      "p5": 0.0,
+      "p25": 0.0,
+      "p50": 0.0,
+      "p75": 0.0,
+      "p95": 0.041666666666666664
+    },
+    "punctuation_density": {
+      "mean": 0.2637294058534226,
+      "std": 0.2145821325404812,
+      "min": 0.0,
+      "max": 11.5,
+      "p5": 0.1,
+      "p25": 0.17647058823529413,
+      "p50": 0.24,
+      "p75": 0.3125,
+      "p95": 0.5
+    }
+  },
+  "validation_metrics": {
+    "accuracy": 0.704,
+    "precision": 0.8333333333333334,
+    "recall": 0.016666666666666666,
+    "f1_score": 0.032679738562091505,
+    "specificity": 0.016666666666666666,
+    "false_alarm_rate": 0.9833333333333333,
+    "detection_rate": 0.9985714285714286,
+    "confusion_matrix": {
+      "tp": 699,
+      "tn": 5,
+      "fp": 295,
+      "fn": 1
+    }
+  },
+  "methodology": {
+    "range_method": "std_deviation",
+    "std_multiplier": 1.5,
+    "feature_count": 11
+  }
+}
