@@ -191,6 +191,22 @@ except Exception as e:
 STOP_WORDS = set(stopwords.words('english'))
 LEMMATIZER = WordNetLemmatizer()
 
+# Pre-warm TextBlob to avoid lazy loading delays
+# This ensures sentiment analysis resources are loaded into memory immediately
+def _prewarm_textblob():
+    """Pre-warm TextBlob resources to avoid lazy loading delays after idle time"""
+    try:
+        # Create a dummy TextBlob instance to trigger resource loading
+        dummy_blob = TextBlob("test")
+        _ = dummy_blob.sentiment  # Access sentiment to load models
+        return True
+    except Exception as e:
+        print(f"Warning: Failed to pre-warm TextBlob: {e}")
+        return False
+
+# Pre-warm on module import
+_TEXTBLOB_PREWARMED = _prewarm_textblob()
+
 
 def get_wordnet_pos(treebank_tag):
     """

@@ -90,6 +90,31 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+async def startup_event():
+    """
+    Pre-warm resources on application startup to avoid slow first request.
+    This ensures all NLP resources and models are loaded and ready.
+    """
+    import time
+    from .review_prediction import predict_review
+    
+    print("Pre-warming application resources...")
+    start_time = time.time()
+    
+    try:
+        # Pre-warm by making a dummy prediction
+        # This ensures all models, NLP resources, and TextBlob are loaded
+        dummy_review = "This is a test review to pre-warm resources."
+        _ = predict_review(dummy_review)
+        
+        elapsed = time.time() - start_time
+        print(f"✓ Resources pre-warmed successfully in {elapsed:.2f}s")
+    except Exception as e:
+        print(f"⚠ Warning: Resource pre-warming failed: {e}")
+        print("  Application will continue, but first request may be slow.")
+
+
 # Request/Response models
 class ReviewRequest(BaseModel):
     """Request model for review prediction"""
@@ -116,6 +141,29 @@ def health_check():
         dict: Health status information
     """
     return {"status": "healthy"}
+
+
+# Keep-alive endpoint to prevent resource cleanup during idle time
+@app.get("/api/keepalive")
+def keepalive():
+    """
+    Keep-alive endpoint to prevent resource cleanup during idle time.
+    This lightweight endpoint ensures resources stay in memory.
+    
+    Returns:
+        dict: Keep-alive status
+    """
+    # Lightweight operation that touches resources without heavy computation
+    from .review_prediction import STOP_WORDS, LEMMATIZER
+    
+    # Just verify resources are accessible (very fast)
+    _ = len(STOP_WORDS)
+    _ = LEMMATIZER.lemmatize("test")
+    
+    return {
+        "status": "alive",
+        "message": "Resources are active"
+    }
 
 
 # API endpoint
