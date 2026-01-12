@@ -118,9 +118,20 @@ Data Structures, Algorithms, and Control:
             Enter an English product review below to check if it might be fraudulent using our unsupervised anomaly detection tool.
           </p>
           <label for="review-input" class="input-label">Your Review</label>
-          <textarea id="review-input" placeholder="Type or paste your product review here..." aria-label="Product review text" maxlength="2000"></textarea>
+          <textarea id="review-input" placeholder="Type or paste your product review here..." aria-label="Product review text"></textarea>
           <div class="input-meta">
-            <span id="char-count">0 / 2000</span>
+            <span id="word-count">0 / 200 words</span>
+          </div>
+          <div class="input-info-box">
+            <div class="info-icon">ℹ️</div>
+            <div class="info-content">
+              <strong>Valid Input Requirements:</strong>
+              <ul>
+                <li>English language only (Tagalog and other languages are not supported)</li>
+                <li>Meaningful text (random letters or gibberish will be rejected)</li>
+                <li>Maximum 200 words</li>
+              </ul>
+            </div>
           </div>
           <button id="submit-btn" class="btn" aria-live="polite">Submit</button>
         </div>
@@ -147,6 +158,9 @@ Data Structures, Algorithms, and Control:
         <div class="step-number">1</div>
         <h3>Enter a Review</h3>
         <p>Type or paste an English product review into the textbox under <strong>Product Review Detection</strong>.</p>
+        <p style="margin-top: 8px; font-size: 0.9rem; color: #666;">
+          <strong>Note:</strong> The tool only accepts English reviews. Tagalog, gibberish, or random letters will be rejected with an "Invalid data entry" message.
+        </p>
       </div>
       <div class="instruction-step">
         <div class="step-number">2</div>
@@ -337,6 +351,28 @@ Data Structures, Algorithms, and Control:
       <div class="modal-buttons">
         <button id="terms-decline-btn" class="btn btn-secondary">Decline</button>
         <button id="terms-accept-btn" class="btn">Accept & Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invalid Data Entry Modal -->
+  <div id="invalid-modal" class="modal">
+    <div class="modal-content invalid-modal">
+      <h3>Invalid Data Entry</h3>
+      <p id="invalid-message">The input contains invalid data. Please enter a valid English review.</p>
+      <div style="margin-top: 16px; padding: 12px; background: #fff3e0; border-radius: 6px; text-align: left;">
+        <p style="margin: 0 0 8px 0; font-weight: 600; color: #e65100;">What makes input invalid?</p>
+        <ul style="margin: 0; padding-left: 20px; color: #666; font-size: 0.9rem;">
+          <li>Text in Tagalog or other non-English languages</li>
+          <li>Random letters or gibberish (e.g., "kjashduikqweha")</li>
+          <li>Meaningless character sequences</li>
+        </ul>
+        <p style="margin: 8px 0 0 0; color: #666; font-size: 0.9rem;">
+          <strong>Please enter a valid English product review.</strong>
+        </p>
+      </div>
+      <div class="modal-buttons">
+        <button id="invalid-ok-btn" class="btn">OK</button>
       </div>
     </div>
   </div>

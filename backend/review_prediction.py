@@ -75,6 +75,7 @@ from textblob import TextBlob
 import joblib
 from scipy.sparse import hstack, csr_matrix
 from sklearn.preprocessing import normalize
+from .input_validation import detect_gibberish
 
 # Download NLTK resources quietly
 NLTK_RESOURCES = [
@@ -411,6 +412,12 @@ def predict_review(review_text):
 
     # Step 11: Compare with threshold
     is_anomalous = cosine_distance > ANOMALY_THRESHOLD
+    
+    # Force gibberish to be flagged as anomalous
+    # This ensures random letter sequences are always flagged
+    if detect_gibberish(original_text):
+        is_anomalous = True
+    
     review_type = 'Anomalous' if is_anomalous else 'Normal'
 
     # Step 12: Calculate confidence (distance from threshold)

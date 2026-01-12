@@ -68,6 +68,7 @@ from pydantic import BaseModel
 
 # Import functions from review_prediction.py
 from .review_prediction import predict_review
+from .input_validation import validate_input
 
 
 # Constants
@@ -226,6 +227,14 @@ def predict(review_request: ReviewRequest):
             return {
                 "error": "Review text cannot be empty"
             }
+        
+        # Validate input (check for Tagalog and gibberish)
+        is_valid, error_message = validate_input(review_text)
+        if not is_valid:
+            return {
+                "error": error_message or "Invalid data entry"
+            }
+        
         result = predict_review(review_text)
         return result
     except Exception as e:

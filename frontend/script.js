@@ -61,13 +61,100 @@ Data Structures, Algorithms, and Control:
 
 // Grab DOM elements
 const termsModal = document.getElementById('terms-modal');
+const invalidModal = document.getElementById('invalid-modal');
 const submitBtn = document.getElementById('submit-btn');
 const reviewInput = document.getElementById('review-input');
 const termsAcceptBtn = document.getElementById('terms-accept-btn');
 const termsDeclineBtn = document.getElementById('terms-decline-btn');
+const invalidOkBtn = document.getElementById('invalid-ok-btn');
+const invalidMessage = document.getElementById('invalid-message');
 
 const resultTitle = document.getElementById('result-title');
 const resultMessage = document.getElementById('result-message');
+const wordCount = document.getElementById('word-count');
+
+// Word count limit
+const MAX_WORDS = 200;
+
+// Function to count words in text
+function countWords(text) {
+    if (!text || text.trim().length === 0) {
+        return 0;
+    }
+    // Split by whitespace and filter out empty strings
+    const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+    return words.length;
+}
+
+// Update word counter
+function updateWordCounter() {
+    if (!reviewInput || !wordCount) return;
+    
+    const text = reviewInput.value;
+    const wordCountValue = countWords(text);
+    
+    // Update display
+    wordCount.textContent = `${wordCountValue} / ${MAX_WORDS} words`;
+    
+    // Change color if approaching or exceeding limit
+    if (wordCountValue > MAX_WORDS) {
+        wordCount.style.color = '#d32f2f'; // Red
+        wordCount.style.fontWeight = 'bold';
+    } else if (wordCountValue > MAX_WORDS * 0.9) {
+        wordCount.style.color = '#f57c00'; // Orange
+        wordCount.style.fontWeight = '600';
+    } else {
+        wordCount.style.color = ''; // Default color
+        wordCount.style.fontWeight = '';
+    }
+}
+
+// Add event listener to update word counter as user types
+if (reviewInput) {
+    reviewInput.addEventListener('input', (e) => {
+        const text = e.target.value;
+        const wordCountValue = countWords(text);
+        
+        // Prevent exceeding word limit by truncating
+        if (wordCountValue > MAX_WORDS) {
+            // Find the position of the 200th word
+            const words = text.trim().split(/\s+/);
+            if (words.length > MAX_WORDS) {
+                const truncatedWords = words.slice(0, MAX_WORDS);
+                const truncatedText = truncatedWords.join(' ');
+                
+                // Set cursor position to end of truncated text
+                const cursorPos = truncatedText.length;
+                e.target.value = truncatedText;
+                e.target.setSelectionRange(cursorPos, cursorPos);
+            }
+        }
+        
+        updateWordCounter();
+    });
+    
+    reviewInput.addEventListener('paste', (e) => {
+        // Use setTimeout to catch paste event after content is inserted
+        setTimeout(() => {
+            const text = reviewInput.value;
+            const wordCountValue = countWords(text);
+            
+            // Truncate if exceeds limit
+            if (wordCountValue > MAX_WORDS) {
+                const words = text.trim().split(/\s+/);
+                if (words.length > MAX_WORDS) {
+                    const truncatedWords = words.slice(0, MAX_WORDS);
+                    reviewInput.value = truncatedWords.join(' ');
+                }
+            }
+            
+            updateWordCounter();
+        }, 0);
+    });
+    
+    // Initial update
+    updateWordCounter();
+}
 
 function syncResultPanelHeight() {
     const leftPanel = document.querySelector('.tool-box.left');
@@ -306,12 +393,136 @@ function calculateFeatureContributions(features) {
     return contributions;
 }
 
+// Validation functions
+function detectTagalog(text) {
+    const tagalogWords = [
+        'ang', 'ng', 'sa', 'na', 'ay', 'mga', 'ito', 'iyan', 'iyon', 'siya', 'kami', 'tayo', 'kayo',
+        'ako', 'ikaw', 'sila', 'namin', 'ninyo', 'nila', 'ko', 'mo', 'niya', 'amin', 'inyo', 'kanila',
+        'at', 'o', 'pero', 'kung', 'kapag', 'dahil', 'kaya', 'kasi', 'dapat', 'pwede', 'puwede',
+        'maganda', 'mahal', 'mura', 'mabuti', 'masama', 'salamat', 'po', 'opo', 'hindi', 'oo',
+        'kumusta', 'kamusta', 'paalam', 'sige', 'tulong', 'tulungan', 'bili', 'bumili', 'bumibili',
+        'gusto', 'gusto ko', 'ayaw', 'mahal ko', 'mahal kita', 'mahal na mahal', 'salamat po',
+        'pangit', 'maganda', 'masarap', 'masama', 'mabait', 'masungit', 'mabuti', 'masama'
+    ];
+    
+    const textLower = text.toLowerCase();
+    const words = textLower.split(/\s+/);
+    const tagalogCount = words.filter(word => tagalogWords.includes(word)).length;
+    
+    return words.length > 0 && (tagalogCount / words.length) > 0.2;
+}
+
+function detectGibberish(text) {
+    const words = text.toLowerCase().match(/\b\w+\b/g) || [];
+    
+    if (words.length === 0) return false;
+    
+    // Check 1: Very short average word length
+    const avgLength = words.reduce((sum, w) => sum + w.length, 0) / words.length;
+    if (avgLength < 3.0 && words.length > 3) return true;
+    
+    // Check 2: Very low lexical diversity
+    const uniqueWords = new Set(words);
+    const diversity = uniqueWords.size / words.length;
+    
+    // Check 3: High ratio of short words with low diversity
+    const shortWords = words.filter(w => w.length <= 4);
+    const shortRatio = shortWords.length / words.length;
+    if (shortRatio > 0.7 && diversity < 0.5) return true;
+    
+    // Check 4: Unusual consonant clusters (3+ consonants in a row)
+    const consonantClusters = words.filter(w => /[bcdfghjklmnpqrstvwxyz]{3,}/i.test(w));
+    if (words.length > 0 && (consonantClusters.length / words.length) > 0.5) return true;
+    
+    // Check 5: All words are very short (1-2 letters)
+    if (words.length >= 5) {
+        const veryShort = words.filter(w => w.length <= 2);
+        if (veryShort.length / words.length > 0.8) return true;
+    }
+    
+    // Check 6: Long words with unusual consonant patterns (like "kjashduikqweha")
+    const longWords = words.filter(w => w.length > 8);
+    if (longWords.length > 0) {
+        const longWordsWithClusters = longWords.filter(w => /[bcdfghjklmnpqrstvwxyz]{3,}/i.test(w));
+        const longWordRatio = longWords.length / words.length;
+        if (longWordRatio > 0.3 && longWordsWithClusters.length > 0) return true;
+    }
+    
+    // Check 7: Single long word that looks like random typing (like "kjashduikqweha")
+    if (words.length === 1 && words[0].length > 10) {
+        const word = words[0];
+        // Count vowels
+        const vowels = (word.match(/[aeiou]/g) || []).length;
+        const vowelRatio = vowels / word.length;
+        
+        // If very few vowels (< 20%) in a long word, likely gibberish
+        if (vowelRatio < 0.2) return true;
+        
+        // Check for 4+ consecutive consonants
+        if (/[bcdfghjklmnpqrstvwxyz]{4,}/i.test(word)) return true;
+    }
+    
+    return false;
+}
+
+function validateInput(text) {
+    if (!text || text.trim().length === 0) {
+        return { valid: false, message: "Please enter a review before submitting." };
+    }
+    
+    // Check word count limit
+    const wordCountValue = countWords(text);
+    if (wordCountValue > MAX_WORDS) {
+        return { valid: false, message: `Review exceeds the maximum limit of ${MAX_WORDS} words. Please shorten your review.` };
+    }
+    
+    if (detectTagalog(text)) {
+        return { valid: false, message: "Invalid data entry" };
+    }
+    
+    if (detectGibberish(text)) {
+        return { valid: false, message: "Invalid data entry" };
+    }
+    
+    return { valid: true, message: null };
+}
+
+// Show invalid data modal
+function showInvalidModal(message) {
+    if (invalidMessage) {
+        invalidMessage.textContent = message || "Invalid data entry";
+    }
+    if (invalidModal) {
+        invalidModal.classList.add('show');
+    }
+}
+
+// Close invalid modal
+if (invalidOkBtn) {
+    invalidOkBtn.addEventListener('click', () => {
+        if (invalidModal) {
+            invalidModal.classList.remove('show');
+        }
+    });
+}
+
+// Close invalid modal on outside click
+if (invalidModal) {
+    invalidModal.addEventListener('click', (event) => {
+        if (event.target === invalidModal) {
+            invalidModal.classList.remove('show');
+        }
+    });
+}
+
 // Handle Submit Button Click - Show Terms First
 submitBtn.addEventListener('click', () => {
     const reviewText = reviewInput.value.trim();
-
-    if (!reviewText) {
-        alert("Please enter a review before submitting.");
+    
+    // Validate input before showing terms modal
+    const validation = validateInput(reviewText);
+    if (!validation.valid) {
+        showInvalidModal(validation.message);
         return;
     }
 
@@ -321,6 +532,14 @@ submitBtn.addEventListener('click', () => {
 // Handle Terms Accept
 termsAcceptBtn.addEventListener('click', async () => {
     const reviewText = reviewInput.value.trim();
+    
+    // Validate again before sending to API
+    const validation = validateInput(reviewText);
+    if (!validation.valid) {
+        termsModal.classList.remove('show');
+        showInvalidModal(validation.message);
+        return;
+    }
     
     termsModal.classList.remove('show');
     
@@ -338,6 +557,14 @@ termsAcceptBtn.addEventListener('click', async () => {
 
         const data = await response.json();
         console.log("Raw backend response:", data);
+        
+        // Check for validation errors from backend
+        if (data.error && data.error.includes("Invalid data entry")) {
+            showInvalidModal("Invalid data entry");
+            resultTitle.textContent = "Invalid Input";
+            resultMessage.textContent = "The input contains invalid data. Please enter a valid English review.";
+            return;
+        }
 
         let result;
         if (data.result) {
