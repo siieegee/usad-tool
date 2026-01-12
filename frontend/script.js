@@ -112,18 +112,14 @@ function updateWordCounter() {
 // Add event listener to update word counter as user types
 if (reviewInput) {
     let previousWordCount = 0;
+    let lastPopupTime = 0;
+    const POPUP_COOLDOWN = 1500; // Show popup at most once every 1.5 seconds to avoid spam
     
     reviewInput.addEventListener('input', (e) => {
         const text = e.target.value;
         const wordCountValue = countWords(text);
         
-        // Check if user is trying to exceed the limit
-        if (wordCountValue > MAX_WORDS && previousWordCount <= MAX_WORDS) {
-            // User just exceeded the limit - show popup with "Invalid data entry" message
-            showInvalidModal("Invalid data entry");
-        }
-        
-        // Prevent exceeding word limit by truncating
+        // Always truncate if exceeds limit
         if (wordCountValue > MAX_WORDS) {
             // Find the position of the 200th word
             const words = text.trim().split(/\s+/);
@@ -135,6 +131,13 @@ if (reviewInput) {
                 const cursorPos = truncatedText.length;
                 e.target.value = truncatedText;
                 e.target.setSelectionRange(cursorPos, cursorPos);
+                
+                // Show popup if user is trying to exceed limit (with cooldown to avoid spam)
+                const now = Date.now();
+                if (now - lastPopupTime > POPUP_COOLDOWN) {
+                    showInvalidModal("Invalid data entry");
+                    lastPopupTime = now;
+                }
             }
         }
         
@@ -148,23 +151,57 @@ if (reviewInput) {
             const text = reviewInput.value;
             const wordCountValue = countWords(text);
             
-            // Check if paste exceeded limit
-            if (wordCountValue > MAX_WORDS) {
-                // Show popup if paste exceeded limit
-                showInvalidModal("Invalid data entry");
-            }
-            
             // Truncate if exceeds limit
             if (wordCountValue > MAX_WORDS) {
                 const words = text.trim().split(/\s+/);
                 if (words.length > MAX_WORDS) {
                     const truncatedWords = words.slice(0, MAX_WORDS);
                     reviewInput.value = truncatedWords.join(' ');
+                    
+                    // Always show popup on paste if it exceeds limit
+                    showInvalidModal("Invalid data entry");
                 }
             }
             
             updateWordCounter();
         }, 0);
+    });
+    
+    // Prevent keydown events that would add more words when already at limit
+    reviewInput.addEventListener('keydown', (e) => {
+        const text = reviewInput.value;
+        const wordCountValue = countWords(text);
+        
+        // If already at or above limit, prevent space and other word-separating characters
+        if (wordCountValue >= MAX_WORDS) {
+            // Allow backspace, delete, arrow keys, etc.
+            const allowedKeys = [
+                'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                'Home', 'End', 'Tab', 'Enter', 'Escape'
+            ];
+            
+            // Allow Ctrl/Cmd combinations (for copy, paste, select all, etc.)
+            if (e.ctrlKey || e.metaKey) {
+                return true; // Allow
+            }
+            
+            // Prevent space and other characters that would add new words
+            if (!allowedKeys.includes(e.key)) {
+                // Check if this key would add a new word
+                const testText = text + e.key;
+                const testWordCount = countWords(testText);
+                
+                if (testWordCount > MAX_WORDS) {
+                    e.preventDefault();
+                    const now = Date.now();
+                    if (now - lastPopupTime > POPUP_COOLDOWN) {
+                        showInvalidModal("Invalid data entry");
+                        lastPopupTime = now;
+                    }
+                    return false;
+                }
+            }
+        }
     });
     
     // Initial update
