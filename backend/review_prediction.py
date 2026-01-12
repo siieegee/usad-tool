@@ -440,6 +440,44 @@ def predict_review(review_text):
                     # Very short single-word reviews are suspicious
                     is_anomalous = True
     
+    # Force reviews with multiple suspicious features to be flagged as anomalous
+    # This catches cases like "STOP BUYING THIS PRODUCT!!!!" with multiple red flags
+    warning_count = 0
+    
+    # Check review length (very short)
+    review_length = enhanced_features.get('review_length', 0)
+    if review_length < 5:  # Very short review
+        warning_count += 1
+    
+    # Check word entropy (low complexity)
+    word_entropy = enhanced_features.get('word_entropy', 0)
+    if word_entropy < 2.0:  # Low linguistic complexity
+        warning_count += 1
+    
+    # Check exclamation marks (excessive)
+    exclamation_count = enhanced_features.get('exclamation_count', 0)
+    if exclamation_count >= 3:  # Excessive exclamation marks
+        warning_count += 1
+    
+    # Check capital letter ratio (high capitalization)
+    capital_ratio = enhanced_features.get('capital_ratio', 0)
+    if capital_ratio > 0.5:  # More than 50% capitalized
+        warning_count += 1
+    
+    # Check question marks (excessive)
+    question_count = enhanced_features.get('question_count', 0)
+    if question_count >= 3:  # Excessive question marks
+        warning_count += 1
+    
+    # Check repetition ratio (high repetition)
+    repetition_ratio = enhanced_features.get('repetition_ratio', 0)
+    if repetition_ratio > 0.3:  # High word repetition
+        warning_count += 1
+    
+    # If 3 or more warning signs, force anomalous classification
+    if warning_count >= 3:
+        is_anomalous = True
+    
     review_type = 'Anomalous' if is_anomalous else 'Normal'
 
     # Step 12: Calculate confidence (distance from threshold)
