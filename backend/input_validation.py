@@ -81,24 +81,67 @@ def detect_gibberish(text):
     if len(words) == 0:
         return False
     
-    # Check 1: Very short average word length (likely random letters)
+    # Check 1: Repetitive character patterns (like "adadada", "ababab", "aaaa")
+    for word in words:
+        if len(word) >= 3:
+            # Check for repeating 2-3 character patterns
+            # "adadada" -> "ad" repeats
+            # "ababab" -> "ab" repeats
+            for pattern_len in [2, 3]:
+                if len(word) >= pattern_len * 2:
+                    pattern = word[:pattern_len]
+                    # Check if pattern repeats throughout the word
+                    repeats = word.count(pattern)
+                    if repeats >= 3:  # Pattern appears 3+ times
+                        return True
+            
+            # Check for single character repetition (like "aaaa", "bbbb")
+            if len(word) >= 4:
+                char_counts = Counter(word)
+                max_char_count = max(char_counts.values())
+                # If one character makes up >70% of the word, likely gibberish
+                if max_char_count / len(word) > 0.7:
+                    return True
+    
+    # Check 2: Low character variety within words (like "adadada" - only 2 unique chars)
+    for word in words:
+        if len(word) >= 4:
+            unique_chars = len(set(word))
+            char_variety = unique_chars / len(word)
+            # If word has very few unique characters (< 40% variety), likely repetitive gibberish
+            if char_variety < 0.4:
+                return True
+    
+    # Check 3: Words that are too repetitive (same 2-3 chars repeating)
+    for word in words:
+        if len(word) >= 6:
+            # Check if word is mostly made of 2-3 unique characters
+            unique_chars = len(set(word))
+            if unique_chars <= 3:
+                return True
+    
+    # Check 4: Very short average word length (likely random letters)
     avg_word_length = sum(len(w) for w in words) / len(words)
     if avg_word_length < 3.0 and len(words) > 3:
         return True
     
-    # Check 2: Very low lexical diversity (repeating same random letters)
+    # Check 5: Very low lexical diversity (repeating same random letters)
     unique_words = len(set(words))
     lexical_diversity = unique_words / len(words) if len(words) > 0 else 0
     
-    # Check 3: High repetition of very short "words" (like "asdf", "qwerty")
+    # Stricter: if diversity is very low, likely gibberish
+    if lexical_diversity < 0.4 and len(words) > 2:
+        return True
+    
+    # Check 6: High repetition of very short "words" (like "asdf", "qwerty")
     short_words = [w for w in words if len(w) <= 4]
     if len(short_words) > 0:
         short_word_ratio = len(short_words) / len(words)
         # If most words are short and there's low diversity, likely gibberish
-        if short_word_ratio > 0.7 and lexical_diversity < 0.5:
+        if short_word_ratio > 0.6 and lexical_diversity < 0.5:
             return True
     
-    # Check 4: Check for patterns of random letter sequences
+    # Check 7: Check for patterns of random letter sequences
     # Look for words that don't follow English patterns (too many consonants in a row)
     consonant_clusters = 0
     for word in words:
@@ -106,10 +149,10 @@ def detect_gibberish(text):
         if re.search(r'[bcdfghjklmnpqrstvwxyz]{3,}', word, re.IGNORECASE):
             consonant_clusters += 1
     
-    if len(words) > 0 and (consonant_clusters / len(words)) > 0.5:
+    if len(words) > 0 and (consonant_clusters / len(words)) > 0.4:
         return True
     
-    # Check 5: Very low word entropy (repetitive patterns)
+    # Check 8: Very low word entropy (repetitive patterns)
     if len(words) > 0:
         word_freq = Counter(words)
         total = len(words)
@@ -117,17 +160,17 @@ def detect_gibberish(text):
         entropy = -sum((count / total) * math.log2(count / total) 
                       for count in word_freq.values() if count > 0)
         
-        # Very low entropy suggests gibberish
-        if entropy < 1.0 and len(words) > 5:
+        # Stricter: lower entropy threshold
+        if entropy < 1.5 and len(words) > 3:
             return True
     
-    # Check 6: All words are very short (1-2 letters) - likely random typing
-    if len(words) >= 5:
+    # Check 9: All words are very short (1-2 letters) - likely random typing
+    if len(words) >= 3:
         very_short = sum(1 for w in words if len(w) <= 2)
-        if very_short / len(words) > 0.8:
+        if very_short / len(words) > 0.7:
             return True
     
-    # Check 7: Long words with unusual consonant patterns (like "kjashduikqweha")
+    # Check 10: Long words with unusual consonant patterns (like "kjashduikqweha")
     # Check for words longer than 8 characters with 3+ consecutive consonants
     long_words_with_clusters = 0
     for word in words:
@@ -142,7 +185,7 @@ def detect_gibberish(text):
         if long_word_ratio > 0.3 and long_words_with_clusters > 0:
             return True
     
-    # Check 8: Single long word that looks like random typing (like "kjashduikqweha")
+    # Check 11: Single long word that looks like random typing (like "kjashduikqweha")
     if len(words) == 1 and len(words[0]) > 10:
         word = words[0]
         # Check for unusual patterns: too many consonants, no vowels in long stretches

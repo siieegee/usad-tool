@@ -111,9 +111,17 @@ function updateWordCounter() {
 
 // Add event listener to update word counter as user types
 if (reviewInput) {
+    let previousWordCount = 0;
+    
     reviewInput.addEventListener('input', (e) => {
         const text = e.target.value;
         const wordCountValue = countWords(text);
+        
+        // Check if user is trying to exceed the limit
+        if (wordCountValue > MAX_WORDS && previousWordCount <= MAX_WORDS) {
+            // User just exceeded the limit - show popup with "Invalid data entry" message
+            showInvalidModal("Invalid data entry");
+        }
         
         // Prevent exceeding word limit by truncating
         if (wordCountValue > MAX_WORDS) {
@@ -130,6 +138,7 @@ if (reviewInput) {
             }
         }
         
+        previousWordCount = wordCountValue;
         updateWordCounter();
     });
     
@@ -138,6 +147,12 @@ if (reviewInput) {
         setTimeout(() => {
             const text = reviewInput.value;
             const wordCountValue = countWords(text);
+            
+            // Check if paste exceeded limit
+            if (wordCountValue > MAX_WORDS) {
+                // Show popup if paste exceeded limit
+                showInvalidModal("Invalid data entry");
+            }
             
             // Truncate if exceeds limit
             if (wordCountValue > MAX_WORDS) {
@@ -153,6 +168,7 @@ if (reviewInput) {
     });
     
     // Initial update
+    previousWordCount = countWords(reviewInput.value);
     updateWordCounter();
 }
 
@@ -417,30 +433,56 @@ function detectGibberish(text) {
     
     if (words.length === 0) return false;
     
-    // Check 1: Very short average word length
-    const avgLength = words.reduce((sum, w) => sum + w.length, 0) / words.length;
-    if (avgLength < 3.0 && words.length > 3) return true;
-    
-    // Check 2: Very low lexical diversity
-    const uniqueWords = new Set(words);
-    const diversity = uniqueWords.size / words.length;
-    
-    // Check 3: High ratio of short words with low diversity
-    const shortWords = words.filter(w => w.length <= 4);
-    const shortRatio = shortWords.length / words.length;
-    if (shortRatio > 0.7 && diversity < 0.5) return true;
-    
-    // Check 4: Unusual consonant clusters (3+ consonants in a row)
-    const consonantClusters = words.filter(w => /[bcdfghjklmnpqrstvwxyz]{3,}/i.test(w));
-    if (words.length > 0 && (consonantClusters.length / words.length) > 0.5) return true;
-    
-    // Check 5: All words are very short (1-2 letters)
-    if (words.length >= 5) {
-        const veryShort = words.filter(w => w.length <= 2);
-        if (veryShort.length / words.length > 0.8) return true;
+    // Check 1: Repetitive character patterns (like "adadada", "ababab", "aaaa")
+    for (const word of words) {
+        if (word.length >= 3) {
+            // Check for repeating 2-3 character patterns
+            for (let patternLen = 2; patternLen <= 3; patternLen++) {
+                if (word.length >= patternLen * 2) {
+                    const pattern = word.substring(0, patternLen);
+                    const repeats = (word.match(new RegExp(pattern, 'g')) || []).length;
+                    if (repeats >= 3) return true; // Pattern appears 3+ times
+                }
+            }
+            
+            // Check for single character repetition (like "aaaa", "bbbb")
+            if (word.length >= 4) {
+                const charCounts = {};
+                for (const char of word) {
+                    charCounts[char] = (charCounts[char] || 0) + 1;
+                }
+                const maxCount = Math.max(...Object.values(charCounts));
+                // If one character makes up >70% of the word, likely gibberish
+                if (maxCount / word.length > 0.7) return true;
+            }
+        }
     }
     
-    // Check 6: Long words with unusual consonant patterns (like "kjashduikqweha")
+    // Check 2: Very short average word length
+    const avgLength = words.reduce((sum, w) => sum + w.length, 0) / words.length;
+    if (avgLength < 3.5 && words.length > 2) return true;
+    
+    // Check 3: Very low lexical diversity (stricter)
+    const uniqueWords = new Set(words);
+    const diversity = uniqueWords.size / words.length;
+    if (diversity < 0.4 && words.length > 2) return true;
+    
+    // Check 4: High ratio of short words with low diversity
+    const shortWords = words.filter(w => w.length <= 4);
+    const shortRatio = shortWords.length / words.length;
+    if (shortRatio > 0.6 && diversity < 0.5) return true;
+    
+    // Check 5: Unusual consonant clusters (3+ consonants in a row)
+    const consonantClusters = words.filter(w => /[bcdfghjklmnpqrstvwxyz]{3,}/i.test(w));
+    if (words.length > 0 && (consonantClusters.length / words.length) > 0.4) return true;
+    
+    // Check 6: All words are very short (1-2 letters)
+    if (words.length >= 3) {
+        const veryShort = words.filter(w => w.length <= 2);
+        if (veryShort.length / words.length > 0.7) return true;
+    }
+    
+    // Check 7: Long words with unusual consonant patterns (like "kjashduikqweha")
     const longWords = words.filter(w => w.length > 8);
     if (longWords.length > 0) {
         const longWordsWithClusters = longWords.filter(w => /[bcdfghjklmnpqrstvwxyz]{3,}/i.test(w));
@@ -448,7 +490,7 @@ function detectGibberish(text) {
         if (longWordRatio > 0.3 && longWordsWithClusters.length > 0) return true;
     }
     
-    // Check 7: Single long word that looks like random typing (like "kjashduikqweha")
+    // Check 8: Single long word that looks like random typing (like "kjashduikqweha")
     if (words.length === 1 && words[0].length > 10) {
         const word = words[0];
         // Count vowels
@@ -460,6 +502,25 @@ function detectGibberish(text) {
         
         // Check for 4+ consecutive consonants
         if (/[bcdfghjklmnpqrstvwxyz]{4,}/i.test(word)) return true;
+    }
+    
+    // Check 9: Low character variety within words (like "adadada" - only 2 unique chars)
+    for (const word of words) {
+        if (word.length >= 4) {
+            const uniqueChars = new Set(word).size;
+            const charVariety = uniqueChars / word.length;
+            // If word has very few unique characters (< 40% variety), likely repetitive gibberish
+            if (charVariety < 0.4) return true;
+        }
+    }
+    
+    // Check 10: Words that are too repetitive (same 2-3 chars repeating)
+    for (const word of words) {
+        if (word.length >= 6) {
+            const uniqueChars = new Set(word).size;
+            // If word is mostly made of 2-3 unique characters, likely gibberish
+            if (uniqueChars <= 3) return true;
+        }
     }
     
     return false;
@@ -522,7 +583,13 @@ submitBtn.addEventListener('click', () => {
     // Validate input before showing terms modal
     const validation = validateInput(reviewText);
     if (!validation.valid) {
-        showInvalidModal(validation.message);
+        // Check if it's a word count issue
+        const wordCountValue = countWords(reviewText);
+        if (wordCountValue > MAX_WORDS) {
+            showInvalidModal("Invalid data entry");
+        } else {
+            showInvalidModal(validation.message);
+        }
         return;
     }
 
