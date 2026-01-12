@@ -53,7 +53,7 @@ Data Structures, Algorithms, and Control:
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>USAD - UnSupervised Anomaly Detection</title>
-  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -66,8 +66,6 @@ Data Structures, Algorithms, and Control:
         <li><a href="#hero">Home</a></li>
         <li><a href="#features">Features</a></li>
         <li><a href="#tool">Tool</a></li>
-        <li><a href="#instructions">How to Use</a></li>
-        <li><a href="#understanding">Understand Results</a></li>
         <li><a href="#about">About Us</a></li>
       </ul>
     </div>
@@ -86,6 +84,7 @@ Data Structures, Algorithms, and Control:
   <section id="features">
     <div class="container">
       <h2>Why Choose USAD?</h2>
+      <p class="section-subtitle">Discover the core advantages of our anomaly detection system.</p>
       <div class="feature-cards">
         <div class="card">
           <div style="font-size: 7.5rem;">🎯</div>
@@ -142,6 +141,7 @@ Data Structures, Algorithms, and Control:
   <section id="instructions">
   <div class="container">
     <h2>How to Use the Tool</h2>
+    <p class="section-subtitle">A simple guide to get started with USAD.</p>
     <div class="instructions-content">
       <div class="instruction-step">
         <div class="step-number">1</div>
@@ -172,6 +172,7 @@ Data Structures, Algorithms, and Control:
   <section id="understanding">
     <div class="container">
       <h2>How to Understand the Results</h2>
+      <p class="section-subtitle">Learn what each metric and badge means.</p>
       <div class="instructions-content">
         <div class="instruction-step">
           <div class="step-number">1</div>
@@ -206,9 +207,13 @@ Data Structures, Algorithms, and Control:
           <h3>Feature Criteria</h3>
           <div class="feature-criteria-content">
             <p>
-              Each feature shows <strong>Value</strong>, a <strong>Criteria</strong> range, and a <strong>Status</strong> badge. "Pass" means typical; "Warning" highlights unusual values.
+              Each feature shows <strong>Value</strong>, a <strong>Criteria</strong> range, and a <strong>Status</strong> badge.
+              "Pass" means typical; "Warning" highlights unusual values.
             </p>
-            <button id="feature-learn-more">Hide Features</button>
+
+            <div class="feature-learn-more-wrapper">
+              <button id="feature-learn-more">Learn More About Features</button>
+            </div>
           </div>
           <div id="feature-glossary" class="feature-glossary">
             <div class="feature-glossary-container">
@@ -275,8 +280,18 @@ Data Structures, Algorithms, and Control:
   <section id="about">
     <div class="container">
       <h2>About Us</h2>
-      <p>USAD is a project focused on detecting fraudulent product reviews using unsupervised anomaly detection techniques. Our goal is to improve e-commerce trust and help customers make informed decisions.</p>
-      <p>Our team is committed to providing a reliable tool that combines advanced machine learning with user-friendly design.</p>
+      <p class="section-subtitle">
+        Learn about USAD, a project designed to detect fraudulent product reviews using unsupervised anomaly detection. Our tool aims to help e-commerce platforms and shoppers make informed decisions by identifying suspicious reviews efficiently and reliably.
+      </p>
+      <p>
+        USAD leverages advanced machine learning techniques to analyze review patterns, detect anomalies, and provide actionable insights without requiring pre-labeled data. By focusing on unsupervised detection, the system adapts to new types of fraud as they emerge.
+      </p>
+      <p>
+        Our team is committed to creating a user-friendly interface that makes complex AI analysis understandable and accessible to everyone. We combine technical expertise with practical design to ensure users can easily submit reviews, interpret results, and gain trust in the system.
+      </p>
+      <p>
+        Ultimately, USAD seeks to improve transparency and reliability in online marketplaces, protect consumers from misleading information, and support businesses in maintaining the integrity of their review systems.
+      </p>
     </div>
   </section>
 
@@ -284,6 +299,7 @@ Data Structures, Algorithms, and Control:
   <section id="team">
     <div class="container">
       <h2>Our Team</h2>
+      <p class="section-subtitle">Meet the dedicated developers and contributors behind USAD, who designed the tool to combine usability and advanced AI.</p>
       <div class="team-cards">
         <div class="card">
           <div class="avatar">CB</div>
@@ -328,6 +344,6 @@ Data Structures, Algorithms, and Control:
   
 
   <!-- External JavaScript file -->
-  <script src="/static/script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
