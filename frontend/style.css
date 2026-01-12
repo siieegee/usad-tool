@@ -314,13 +314,15 @@ nav {
 #features h2,
 #instructions h2,
 #understanding h2,
-#about h2 {
+#about h2,
+#team h2 {
     font-size: 3rem;
     margin-bottom: 50px;
 }
 
 #instructions h2,
-#about h2 {
+#about h2,
+#team h2 {
     color: var(--primary-color);
 }
 
@@ -331,12 +333,6 @@ nav {
 
 #understanding h2 {
     margin-bottom: 36px;
-}
-
-#team h2 {
-    font-size: 2.4rem;
-    color: var(--primary-color);
-    margin-bottom: 50px;
 }
 
 /* ============================================
