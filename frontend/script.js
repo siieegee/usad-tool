@@ -673,3 +673,56 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+
+// Smooth scrolling for navigation links with custom duration
+document.addEventListener('DOMContentLoaded', () => {
+    const nav = document.querySelector('nav');
+    const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+
+    // Smooth scroll function with custom easing
+    function smoothScrollTo(targetPosition, duration = 1000) {
+        const startPosition = window.pageYOffset;
+        const distance = targetPosition - startPosition;
+        let startTime = null;
+
+        function animation(currentTime) {
+            if (startTime === null) startTime = currentTime;
+            const timeElapsed = currentTime - startTime;
+            const progress = Math.min(timeElapsed / duration, 1);
+            
+            // Easing function (ease-in-out)
+            const ease = progress < 0.5 
+                ? 4 * progress * progress * progress 
+                : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+            
+            window.scrollTo(0, startPosition + distance * ease);
+
+            if (timeElapsed < duration) {
+                requestAnimationFrame(animation);
+            }
+        }
+
+        requestAnimationFrame(animation);
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            const targetId = link.getAttribute('href').substring(1);
+            const targetSection = document.getElementById(targetId);
+            
+            if (targetSection) {
+                const navHeight = nav ? nav.offsetHeight : 0;
+                const targetPosition = targetSection.offsetTop - navHeight - 20;
+                
+                // Use custom smooth scroll with 800ms duration
+                smoothScrollTo(targetPosition, 1200);
+                
+                // Update URL without jumping
+                history.pushState(null, '', `#${targetId}`);
+            }
+        });
+    });
+});
