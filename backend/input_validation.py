@@ -120,6 +120,41 @@ def detect_gibberish(text):
             if unique_chars <= 3:
                 return True
     
+    # Check 3b: Single short word that looks like random keyboard mashing (like "qweasd")
+    # These are often 4-8 characters, all lowercase, no vowels in proper patterns
+    if len(words) == 1:
+        word = words[0]
+        if 4 <= len(word) <= 8:
+            # Check if it's all lowercase and looks like random typing
+            if word.islower() and word.isalpha():
+                # Check for keyboard patterns (qwerty, asdf, etc.)
+                keyboard_rows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm']
+                consecutive_chars = 0
+                for i in range(len(word) - 1):
+                    for row in keyboard_rows:
+                        if word[i] in row and word[i+1] in row:
+                            # Check if they're adjacent on keyboard
+                            idx1 = row.find(word[i])
+                            idx2 = row.find(word[i+1])
+                            if idx1 != -1 and idx2 != -1 and abs(idx1 - idx2) <= 2:
+                                consecutive_chars += 1
+                                break
+                
+                # If many consecutive keyboard-adjacent chars, likely gibberish
+                if consecutive_chars >= 2:
+                    return True
+                
+                # Also check: if word has very low linguistic quality (no common English patterns)
+                # Very short single words that aren't common English words
+                common_short_words = {'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'boy', 'did', 'its', 'let', 'put', 'say', 'she', 'too', 'use'}
+                if word not in common_short_words:
+                    # Check vowel distribution - random typing often has odd patterns
+                    vowels = sum(1 for c in word if c in 'aeiou')
+                    vowel_ratio = vowels / len(word) if len(word) > 0 else 0
+                    # If very few vowels (< 25%) in a short word, likely gibberish
+                    if vowel_ratio < 0.25:
+                        return True
+    
     # Check 4: Very short average word length (likely random letters)
     avg_word_length = sum(len(w) for w in words) / len(words)
     if avg_word_length < 3.0 and len(words) > 3:

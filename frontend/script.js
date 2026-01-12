@@ -560,6 +560,38 @@ function detectGibberish(text) {
         }
     }
     
+    // Check 11: Single short word that looks like random keyboard mashing (like "qweasd")
+    if (words.length === 1) {
+        const word = words[0];
+        if (word.length >= 4 && word.length <= 8) {
+            // Check if it's all lowercase and looks like random typing
+            if (word === word.toLowerCase() && /^[a-z]+$/.test(word)) {
+                // Check for keyboard patterns (qwerty, asdf, etc.)
+                const keyboardRows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+                let consecutiveChars = 0;
+                for (let i = 0; i < word.length - 1; i++) {
+                    for (const row of keyboardRows) {
+                        const idx1 = row.indexOf(word[i]);
+                        const idx2 = row.indexOf(word[i + 1]);
+                        if (idx1 !== -1 && idx2 !== -1 && Math.abs(idx1 - idx2) <= 2) {
+                            consecutiveChars++;
+                            break;
+                        }
+                    }
+                }
+                
+                // If many consecutive keyboard-adjacent chars, likely gibberish
+                if (consecutiveChars >= 2) return true;
+                
+                // Check vowel distribution - random typing often has odd patterns
+                const vowels = (word.match(/[aeiou]/g) || []).length;
+                const vowelRatio = vowels / word.length;
+                // If very few vowels (< 25%) in a short word, likely gibberish
+                if (vowelRatio < 0.25) return true;
+            }
+        }
+    }
+    
     return false;
 }
 

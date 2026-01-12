@@ -418,6 +418,28 @@ def predict_review(review_text):
     if detect_gibberish(original_text):
         is_anomalous = True
     
+    # Force very short reviews with low entropy to be flagged as anomalous
+    # This catches cases like "qweasd" that might not be caught by gibberish detection
+    if len(processed_tokens) <= 2:  # 1-2 words
+        review_length = enhanced_features.get('review_length', 0)
+        word_entropy = enhanced_features.get('word_entropy', 0)
+        
+        # If very short (1-2 words) and very low entropy (< 1.0), flag as anomalous
+        if review_length <= 2 and word_entropy < 1.0:
+            is_anomalous = True
+        
+        # Also flag single-word inputs that are suspiciously short (like "qweasd")
+        # Single word reviews are almost always suspicious unless they're common words
+        if review_length == 1:
+            # Check if it's a very short single word (4-8 chars) - likely gibberish
+            first_word = processed_tokens[0] if processed_tokens else ""
+            if 4 <= len(first_word) <= 8:
+                # Common short words that might be legitimate
+                common_words = {'good', 'nice', 'fine', 'okay', 'ok', 'bad', 'poor', 'best', 'worst', 'love', 'hate', 'like', 'cool', 'great', 'awful', 'excellent', 'terrible', 'amazing', 'horrible', 'perfect', 'waste', 'money', 'price', 'value', 'worth', 'buy', 'sell', 'deal', 'cheap', 'expensive', 'quality', 'product', 'item', 'order', 'ship', 'fast', 'slow', 'quick', 'easy', 'hard', 'works', 'broke', 'broke', 'fixed', 'help', 'thanks', 'thank'}
+                if first_word.lower() not in common_words:
+                    # Very short single-word reviews are suspicious
+                    is_anomalous = True
+    
     review_type = 'Anomalous' if is_anomalous else 'Normal'
 
     # Step 12: Calculate confidence (distance from threshold)
