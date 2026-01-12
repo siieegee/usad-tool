@@ -8,13 +8,13 @@ If you're using **Modal** for deployment, containers automatically sleep after ~
 
 ## Solutions Implemented
 
-### ✅ Fix 1: Modal `keep_warm` Parameter
+### ✅ Fix 1: Modal `min_containers` Parameter
 **File**: `deploy.py`
 
-Added `keep_warm=1` to keep at least 1 container always running:
+Added `min_containers=1` to keep at least 1 container always running:
 ```python
 @app.function(
-    keep_warm=1,  # Keep 1 container warm
+    min_containers=1,  # Keep 1 container warm
     ...
 )
 ```
@@ -56,6 +56,8 @@ def keepalive():
 
 2. **The fixes are automatic** - no additional configuration needed.
 
+**Note**: Modal uses `min_containers` (not `keep_warm`) in newer versions.
+
 ## Alternative: If Not Using Modal
 
 If you're running locally or on another platform:
@@ -84,11 +86,11 @@ Check:
 
 ## Cost Consideration
 
-`keep_warm=1` means 1 container is always running, which has a cost. However:
+`min_containers=1` means 1 container is always running, which has a cost. However:
 - It's usually minimal (Modal charges per second)
 - Much better user experience
 - Prevents slow first requests
 
 If cost is a concern, you can:
-- Use `keep_warm=0` and rely on background task
+- Use `min_containers=0` and rely on background task
 - Or use keep-alive endpoint with external cron job
