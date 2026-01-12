@@ -69,19 +69,224 @@ const termsDeclineBtn = document.getElementById('terms-decline-btn');
 const resultTitle = document.getElementById('result-title');
 const resultMessage = document.getElementById('result-message');
 
+// Cached selectors and helpers to reduce repeated layout reads
+const cached = {
+    nav: document.querySelector('nav'),
+    leftPanel: document.querySelector('.tool-box.left'),
+    rightPanel: document.querySelector('.sticky-results .result-panel'),
+    featureLearnMoreBtn: null,
+    featureGlossary: null,
+    glossaryHidden: null
+};
+
+// Utilities
+function rafDebounce(fn) {
+    let frame = null;
+    return (...args) => {
+        if (frame) cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(() => { frame = null; fn(...args); });
+    };
+}
+
+function deferIdle(callback) {
+    if (window.requestIdleCallback) {
+        window.requestIdleCallback(callback, { timeout: 200 });
+    } else {
+        setTimeout(callback, 50);
+    }
+}
+
+// Render full detailed result during idle time to avoid blocking
+function renderFullResult({ isGenuine, analysis, contributions, features, confidence }) {
+    // Build reasons HTML
+    let reasonsHtml = '';
+    if (analysis.reasons.length > 0) {
+        reasonsHtml = '<div style="margin: 8px 0; font-size: 0.9rem;">';
+        reasonsHtml += (
+            '<p style="margin: 4px 0 6px; font-weight: 600; ' +
+            'color: var(--secondary-color); font-size: 0.95rem;">' +
+            'Key Warning Signs:</p>'
+        );
+        analysis.reasons.forEach(reason => {
+            const severityColor = (
+                reason.severity === 'high' ? '#d32f2f' :
+                reason.severity === 'medium' ? '#f57c00' : '#fbc02d'
+            );
+            reasonsHtml += `
+                <div style="margin: 6px 0; padding: 8px; background: #fff3e0; border-left: 4px solid ${severityColor}; border-radius: 4px;">
+                    <div style="font-weight: 600; color: ${severityColor}; margin-bottom: 2px; font-size: 0.92rem;">
+                        ${reason.feature}: ${reason.message}
+                    </div>
+                    <div style="font-size: 0.85rem; color: #666;">
+                        ${reason.detail}
+                    </div>
+                </div>
+            `;
+        });
+        reasonsHtml += '</div>';
+    } else if (isGenuine) {
+        reasonsHtml += (
+            '<div style="margin: 10px 0; padding: 12px; ' +
+            'background: #e8f5e9; border-left: 4px solid #4caf50; ' +
+            'border-radius: 4px;">'
+        );
+        reasonsHtml += (
+            '<p style="margin: 0; color: #2e7d32; font-weight: 500;">' +
+            'All features are within normal ranges. This review shows ' +
+            'characteristics of genuine feedback.</p>'
+        );
+        reasonsHtml += '</div>';
+    }
+
+    // Build contributions HTML (top 5)
+    const topContributions = contributions.slice(0, 5);
+    const contributionsHtml = topContributions.map(c => {
+        const formatted = typeof c.value === 'number'
+            ? (Math.abs(c.value) < 1 && c.value !== 0
+                ? c.value.toFixed(4)
+                : c.value.toFixed(2))
+            : String(c.value);
+        const statusClass = c.inRange
+            ? 'status-tag status-pass'
+            : 'status-tag status-warn';
+        const statusText = c.inRange ? 'Normal' : 'Unusual';
+        const deviationBar = Math.min(c.deviation, 100);
+        const barColor = c.inRange ? '#4caf50' : '#f57c00';
+        const niceName = FEATURE_LABELS[c.feature] || c.feature.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const desc = FEATURE_DESCRIPTIONS[c.feature] || '';
+
+        return `
+            <div style="margin: 8px 0; padding: 10px; background: #f9f9f9; border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-weight: 600;">${niceName}
+                        <span class="help-icon" title="${desc}">?</span>
+                    </span>
+                    <span class="${statusClass}">${statusText}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="min-width: 60px; font-size: 0.95rem;">Value: <strong>${formatted}</strong></span>
+                    <div style="flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
+                        <div style="height: 100%; width: ${deviationBar}%; background: ${barColor}; transition: width 0.3s;"></div>
+                    </div>
+                    <span style="min-width: 50px; font-size: 0.9rem; color: #666;">${deviationBar.toFixed(0)}%</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    const badgeClass = isGenuine ? 'badge badge-normal' : 'badge badge-anom';
+
+    // Build the full details HTML
+    const fullHtml = `
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+            <span class="${badgeClass}">${isGenuine ? 'Normal' : 'Suspicious'}</span>
+        </div>
+
+        ${reasonsHtml}
+
+        <div class="details-toggle" id="details-toggle">Show all technical details</div>
+        <div class="details-content" id="details-content">
+            <p style="margin: 16px 0 8px; font-weight: 600; color: var(--secondary-color);">All Feature Values</p>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse: collapse; font-size: 0.9rem; background: white;">
+                    <thead>
+                        <tr style="background: #f5f5f5;">
+                            <th style="text-align:left; padding:10px 8px; border-bottom: 2px solid #ddd;">Feature</th>
+                            <th style="text-align:center; padding:10px 8px; border-bottom: 2px solid #ddd;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.entries(features).map(([key, value]) => {
+                            const formatted = typeof value === 'number'
+                                ? (Math.abs(value) < 1 && value !== 0
+                                    ? value.toFixed(4)
+                                    : value.toFixed(3))
+                                : String(value);
+                            const profile = FEATURE_PROFILES.normal[key];
+                            const inRange = profile
+                                ? (value >= profile.min && value <= profile.max)
+                                : true;
+                            const statusClass = inRange
+                                ? 'status-tag status-pass'
+                                : 'status-tag status-warn';
+                            const statusText = inRange ? 'Normal' : 'Unusual';
+                            const niceName = FEATURE_LABELS[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            const desc = FEATURE_DESCRIPTIONS[key] || '';
+                            const basis = profile
+                                ? `Typical: ${Number(profile.min).toFixed(3)}–${Number(profile.max).toFixed(3)} (optimal ${Number(profile.optimal).toFixed(3)})`
+                                : '';
+
+                            return `
+                                <tr style="border-bottom: 1px solid #eee;">
+                                    <td style="padding:10px 8px;">${niceName}
+                                        <span class="help-icon" title="${desc}">?</span>
+                                    </td>
+                                    <td style="padding:10px 8px; text-align:center;">
+                                        <span class="${statusClass}" title="Value: ${formatted}${basis ? ` | ${basis}` : ''}">${statusText}</span>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top: 10px; text-align: right;">
+                <button id="glossary-btn" class="btn btn-secondary" style="padding: 10px 16px; font-size: 0.95rem;">Feature Glossary</button>
+            </div>
+        </div>
+        <div style="margin-top:12px;">${contributionsHtml}</div>
+    `;
+
+    // Apply expensive DOM update in a single paint opportunity
+    requestAnimationFrame(() => {
+        resultMessage.innerHTML = fullHtml;
+
+        // Reattach interactive handlers
+        const toggleEl = document.getElementById('details-toggle');
+        const detailsEl = document.getElementById('details-content');
+        if (toggleEl && detailsEl) {
+            detailsEl.classList.remove('show');
+            toggleEl.textContent = 'Show all technical details';
+            toggleEl.addEventListener('click', () => {
+                const showing = detailsEl.classList.toggle('show');
+                toggleEl.textContent = showing ? 'Hide technical details' : 'Show all technical details';
+            });
+        }
+
+        const glossaryBtn = document.getElementById('glossary-btn');
+        if (glossaryBtn) {
+            glossaryBtn.addEventListener('click', () => {
+                const learnMoreBtn = document.getElementById('feature-learn-more');
+                const criteriaPanel = document.querySelector('.feature-criteria-content');
+                const glossaryEl = document.getElementById('feature-glossary');
+                const target = learnMoreBtn || criteriaPanel || glossaryEl;
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (learnMoreBtn && learnMoreBtn.focus) learnMoreBtn.focus({ preventScroll: true });
+            });
+        }
+
+        // Sync heights after content update (debounced)
+        rafDebounce(syncResultPanelHeight)();
+    });
+}
 function syncResultPanelHeight() {
-    const leftPanel = document.querySelector('.tool-box.left');
-    const rightPanel = document.querySelector('.sticky-results .result-panel');
+    const leftPanel = cached.leftPanel || document.querySelector('.tool-box.left');
+    const rightPanel = cached.rightPanel || document.querySelector('.sticky-results .result-panel');
+    cached.leftPanel = leftPanel;
+    cached.rightPanel = rightPanel;
     if (!leftPanel || !rightPanel) return;
+    // Read once, write inside rAF to avoid layout thrash
     const leftHeight = leftPanel.getBoundingClientRect().height;
-    rightPanel.style.height = `${leftHeight}px`;
-    rightPanel.style.maxHeight = `${leftHeight}px`;
-    rightPanel.style.overflowY = 'auto';
+    requestAnimationFrame(() => {
+        rightPanel.style.height = `${leftHeight}px`;
+        rightPanel.style.maxHeight = `${leftHeight}px`;
+        rightPanel.style.overflowY = 'auto';
+    });
 }
 
 // Run on load and resize
 window.addEventListener('load', syncResultPanelHeight);
-window.addEventListener('resize', syncResultPanelHeight);
+window.addEventListener('resize', rafDebounce(syncResultPanelHeight));
 
 // Define feature baselines and thresholds based on typical patterns
 const FEATURE_PROFILES = {
@@ -363,259 +568,20 @@ termsAcceptBtn.addEventListener('click', async () => {
         // Analyze features with detailed reasoning
         const analysis = analyzeFeatures(features, result.prediction);
         const contributions = calculateFeatureContributions(features);
-        
-        // Build reasons HTML
-        let reasonsHtml = '';
-        if (analysis.reasons.length > 0) {
-            reasonsHtml = '<div style="margin: 8px 0; font-size: 0.9rem;">';
-            reasonsHtml += (
-                '<p style="margin: 4px 0 6px; font-weight: 600; ' +
-                'color: var(--secondary-color); font-size: 0.95rem;">' +
-                'Key Warning Signs:</p>'
-            );
-            analysis.reasons.forEach(reason => {
-                const severityColor = (
-                    reason.severity === 'high' ? '#d32f2f' :
-                    reason.severity === 'medium' ? '#f57c00' : '#fbc02d'
-                );
-                reasonsHtml += `
-                    <div style=\"margin: 6px 0; padding: 8px; background: #fff3e0; border-left: 4px solid ${severityColor}; border-radius: 4px;\">
-                        <div style=\"font-weight: 600; color: ${severityColor}; margin-bottom: 2px; font-size: 0.92rem;\">
-                            ${reason.feature}: ${reason.message}
-                        </div>
-                        <div style=\"font-size: 0.85rem; color: #666;\">
-                            ${reason.detail}
-                        </div>
-                    </div>
-                `;
-            });
-            reasonsHtml += '</div>';
-        } else if (isGenuine) {
-            reasonsHtml += (
-                '<div style="margin: 10px 0; padding: 12px; ' +
-                'background: #e8f5e9; border-left: 4px solid #4caf50; ' +
-                'border-radius: 4px;">'
-            );
-            reasonsHtml += (
-                '<p style="margin: 0; color: #2e7d32; font-weight: 500;">' +
-                'All features are within normal ranges. This review shows ' +
-                'characteristics of genuine feedback.</p>'
-            );
-            reasonsHtml += '</div>';
-        }
 
-        // Add minor warnings if any
-        if (analysis.warnings.length > 0 && !isGenuine) {
-            reasonsHtml += (
-                '<p style="margin: 12px 0 6px; font-weight: 600; ' +
-                'color: #666; font-size: 0.9rem;">Minor Observations:</p>'
-            );
-            analysis.warnings.forEach(warning => {
-                reasonsHtml += `
-                    <div style="margin: 6px 0; padding: 8px; background: #f5f5f5; border-left: 3px solid #999; border-radius: 4px; font-size: 0.9rem;">
-                        <strong>${warning.feature}:</strong> ${warning.message}
-                    </div>
-                `;
-            });
-        }
-
-        // Build feature contributions table
-        const topContributions = contributions.slice(0, 5);
-        const contributionsHtml = topContributions.map(c => {
-            const formatted = typeof c.value === 'number'
-                ? (Math.abs(c.value) < 1 && c.value !== 0
-                    ? c.value.toFixed(4)
-                    : c.value.toFixed(2))
-                : String(c.value);
-            const statusClass = c.inRange
-                ? 'status-tag status-pass'
-                : 'status-tag status-warn';
-            const statusText = c.inRange ? 'Normal' : 'Unusual';
-            const deviationBar = Math.min(c.deviation, 100);
-            const barColor = c.inRange ? '#4caf50' : '#f57c00';
-            const niceName = FEATURE_LABELS[c.feature] ||
-                c.feature.replace(/_/g, ' ')
-                    .replace(/\b\w/g, l => l.toUpperCase());
-            const desc = FEATURE_DESCRIPTIONS[c.feature] || '';
-            
-            return `
-                <div style="margin: 8px 0; padding: 10px; background: #f9f9f9; border-radius: 6px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <span style="font-weight: 600;">${niceName}
-                            <span class="help-icon" title="${desc}">?</span>
-                        </span>
-                        <span class="${statusClass}">${statusText}</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="min-width: 60px; font-size: 0.95rem;">Value: <strong>${formatted}</strong></span>
-                        <div style="flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
-                            <div style="height: 100%; width: ${deviationBar}%; background: ${barColor}; transition: width 0.3s;"></div>
-                        </div>
-                        <span style="min-width: 50px; font-size: 0.9rem; color: #666;">${deviationBar.toFixed(0)}%</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
+        // Show lightweight summary immediately to improve perceived responsiveness
         const badgeClass = isGenuine ? 'badge badge-normal' : 'badge badge-anom';
-        const barClass = isGenuine ? 'progress-bar progress-blue' : 'progress-bar progress-red';
         const safeConfidence = Math.max(0, Math.min(100, confidence));
-
         resultMessage.innerHTML = `
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
                 <span class="${badgeClass}">${isGenuine ? 'Normal' : 'Suspicious'}</span>
+                <span style="color: #666; font-size:0.95rem;">Confidence: ${safeConfidence}%</span>
             </div>
-
-            ${reasonsHtml}
-
-            <div class="details-toggle" id="details-toggle">Show all technical details</div>
-            <div class="details-content" id="details-content">
-                <p style="margin: 16px 0 8px; font-weight: 600; color: var(--secondary-color);">All Feature Values</p>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse: collapse; font-size: 0.9rem; background: white;">
-                        <thead>
-                            <tr style="background: #f5f5f5;">
-                                <th style="text-align:left; padding:10px 8px; border-bottom: 2px solid #ddd;">Feature</th>
-                                <th style="text-align:center; padding:10px 8px; border-bottom: 2px solid #ddd;">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${Object.entries(features).map(([key, value]) => {
-                                const formatted = typeof value === 'number'
-                                    ? (Math.abs(value) < 1 && value !== 0
-                                        ? value.toFixed(4)
-                                        : value.toFixed(3))
-                                    : String(value);
-                                const profile = FEATURE_PROFILES.normal[key];
-                                const inRange = profile
-                                    ? (value >= profile.min && value <= profile.max)
-                                    : true;
-                                const statusClass = inRange
-                                    ? 'status-tag status-pass'
-                                    : 'status-tag status-warn';
-                                const statusText = inRange ? 'Normal' : 'Unusual';
-                                const niceName = FEATURE_LABELS[key] ||
-                                    key.replace(/_/g, ' ')
-                                        .replace(/\b\w/g, l => l.toUpperCase());
-                                const desc = FEATURE_DESCRIPTIONS[key] || '';
-                                const basis = profile
-                                    ? `Typical: ${Number(profile.min).toFixed(3)}–` +
-                                      `${Number(profile.max).toFixed(3)} ` +
-                                      `(optimal ${Number(profile.optimal).toFixed(3)})`
-                                    : '';
-                                
-                                return `
-                                    <tr style="border-bottom: 1px solid #eee;">
-                                        <td style="padding:10px 8px;">${niceName}
-                                            <span class="help-icon" title="${desc}">?</span>
-                                        </td>
-                                        <td style="padding:10px 8px; text-align:center;">
-                                            <span class="${statusClass}" title="Value: ${formatted}${basis ? ` | ${basis}` : ''}">${statusText}</span>
-                                        </td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-                <div style="margin-top: 10px; text-align: right;">
-                    <button id="glossary-btn" class="btn btn-secondary" style="padding: 10px 16px; font-size: 0.95rem;">Feature Glossary</button>
-                </div>
-            </div>
+            <div style="font-size:0.95rem; color:#666;">Processing analysis details...</div>
         `;
 
-        // Toggle handler
-        const toggleEl = document.getElementById('details-toggle');
-        const detailsEl = document.getElementById('details-content');
-        if (toggleEl && detailsEl) {
-            // Keep hidden by default; reveal only on click
-            detailsEl.classList.remove('show');
-            toggleEl.textContent = 'Show all technical details';
-            toggleEl.addEventListener('click', () => {
-                const showing = detailsEl.classList.toggle('show');
-                toggleEl.textContent = showing ? 'Hide technical details' : 'Show all technical details';
-            });
-        }
-        // Sync heights after content update
-        syncResultPanelHeight();
-
-        // Glossary button: redirect to Feature Criteria panel and highlight button
-        const glossaryBtn = document.getElementById('glossary-btn');
-        if (glossaryBtn) {
-            glossaryBtn.addEventListener('click', () => {
-                const learnMoreBtn = document.getElementById('feature-learn-more');
-                const criteriaPanel = document.querySelector(
-                    '.feature-criteria-content'
-                );
-                const glossaryEl = document.getElementById('feature-glossary');
-                const target = learnMoreBtn || criteriaPanel || glossaryEl;
-
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
-                }
-
-                // Highlight the Learn More button to draw attention
-                if (learnMoreBtn) {
-                    // Keep the page from auto-scrolling due to focus
-                    if (learnMoreBtn.focus) {
-                        learnMoreBtn.focus({ preventScroll: true });
-                    }
-
-                    const originalTransition = learnMoreBtn.style.transition;
-                    const originalBoxShadow = learnMoreBtn.style.boxShadow;
-                    const originalTransform = learnMoreBtn.style.transform;
-
-                    learnMoreBtn.style.transition = (
-                        'box-shadow 0.3s, transform 0.2s'
-                    );
-
-                    let pulses = 0;
-                    const pulse = () => {
-                        const shadowValue = (
-                            '0 0 0 4px rgba(193, 18, 31, 0.25), ' +
-                            '0 0 12px rgba(193, 18, 31, 0.6)'
-                        );
-                        learnMoreBtn.style.boxShadow = shadowValue;
-                        learnMoreBtn.style.transform = 'scale(1.04)';
-                        setTimeout(() => {
-                            learnMoreBtn.style.boxShadow = (
-                                '0 0 0 0 rgba(0,0,0,0)'
-                            );
-                            learnMoreBtn.style.transform = 'scale(1.0)';
-                            pulses++;
-                            if (pulses < 3) {
-                                setTimeout(pulse, 200);
-                            } else {
-                                setTimeout(() => {
-                                    learnMoreBtn.style.transition = (
-                                        originalTransition
-                                    );
-                                    learnMoreBtn.style.boxShadow = (
-                                        originalBoxShadow
-                                    );
-                                    learnMoreBtn.style.transform = (
-                                        originalTransform
-                                    );
-                                }, 600);
-                            }
-                        }, 450);
-                    };
-                    pulse();
-                }
-            });
-        }
-
-        // Match heights: set result panel height equal to left tool panel height
-        const leftPanel = document.querySelector('.tool-box.left');
-        const rightPanel = document.querySelector('.sticky-results .result-panel');
-        if (leftPanel && rightPanel) {
-            const leftHeight = leftPanel.getBoundingClientRect().height;
-            rightPanel.style.maxHeight = `${leftHeight - 54}px`;
-            rightPanel.style.overflowY = 'auto';
-        }
+        // Defer the expensive full render to idle time
+        deferIdle(() => renderFullResult({ isGenuine, analysis, contributions, features, confidence }));
     } catch (error) {
         console.error("Error:", error);
         resultTitle.textContent = "Error!";
