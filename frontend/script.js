@@ -565,12 +565,23 @@ termsAcceptBtn.addEventListener('click', async () => {
         const confidence = Number(result.confidence || 0);
         const features = result.features || {};
 
-        // Analyze features with detailed reasoning and render full details immediately
+        // Analyze features with detailed reasoning
         const analysis = analyzeFeatures(features, result.prediction);
         const contributions = calculateFeatureContributions(features);
 
-        // Render the full technical details synchronously (no defer)
-        renderFullResult({ isGenuine, analysis, contributions, features, confidence });
+        // Show lightweight summary immediately to improve perceived responsiveness
+        const badgeClass = isGenuine ? 'badge badge-normal' : 'badge badge-anom';
+        const safeConfidence = Math.max(0, Math.min(100, confidence));
+        resultMessage.innerHTML = `
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                <span class="${badgeClass}">${isGenuine ? 'Normal' : 'Suspicious'}</span>
+                <span style="color: #666; font-size:0.95rem;">Confidence: ${safeConfidence}%</span>
+            </div>
+            <div style="font-size:0.95rem; color:#666;">Processing analysis details...</div>
+        `;
+
+        // Defer the expensive full render to idle time
+        deferIdle(() => renderFullResult({ isGenuine, analysis, contributions, features, confidence }));
     } catch (error) {
         console.error("Error:", error);
         resultTitle.textContent = "Error!";
