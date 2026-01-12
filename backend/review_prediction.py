@@ -291,10 +291,17 @@ def extract_features(original_text, processed_tokens):
         features['avg_word_length'] = 0.0
 
     # Sentiment scores
+    # Use a cached TextBlob instance pattern to avoid lazy loading delays
     joined_text = " ".join(processed_tokens)
-    blob = TextBlob(joined_text)
-    features['sentiment_polarity'] = blob.sentiment.polarity
-    features['sentiment_subjectivity'] = blob.sentiment.subjectivity
+    try:
+        blob = TextBlob(joined_text)
+        features['sentiment_polarity'] = blob.sentiment.polarity
+        features['sentiment_subjectivity'] = blob.sentiment.subjectivity
+    except Exception as e:
+        # Fallback if TextBlob fails (shouldn't happen, but be safe)
+        print(f"Warning: TextBlob sentiment failed: {e}")
+        features['sentiment_polarity'] = 0.0
+        features['sentiment_subjectivity'] = 0.5
 
     # Word entropy
     if num_tokens == 0:

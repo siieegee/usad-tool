@@ -97,6 +97,7 @@ async def startup_event():
     This ensures all NLP resources and models are loaded and ready.
     """
     import time
+    import asyncio
     from .review_prediction import predict_review
     
     print("Pre-warming application resources...")
@@ -108,11 +109,45 @@ async def startup_event():
         dummy_review = "This is a test review to pre-warm resources."
         _ = predict_review(dummy_review)
         
+        # Also pre-warm TextBlob multiple times to ensure it's fully loaded
+        from textblob import TextBlob
+        for _ in range(3):
+            blob = TextBlob("test warmup")
+            _ = blob.sentiment
+        
         elapsed = time.time() - start_time
         print(f"✓ Resources pre-warmed successfully in {elapsed:.2f}s")
+        
+        # Start background keep-alive task
+        asyncio.create_task(background_keepalive())
     except Exception as e:
         print(f"⚠ Warning: Resource pre-warming failed: {e}")
         print("  Application will continue, but first request may be slow.")
+
+
+async def background_keepalive():
+    """
+    Background task to keep resources warm by making periodic dummy predictions.
+    This prevents resources from being garbage collected during idle time.
+    """
+    import asyncio
+    from .review_prediction import predict_review
+    
+    while True:
+        try:
+            # Wait 90 seconds (before 2-minute idle threshold)
+            await asyncio.sleep(90)
+            
+            # Make a lightweight prediction to keep resources active
+            try:
+                _ = predict_review("keepalive")
+            except:
+                pass  # Silently fail if prediction fails
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            print(f"Keep-alive task error: {e}")
+            await asyncio.sleep(90)  # Wait before retrying
 
 
 # Request/Response models
@@ -148,22 +183,26 @@ def health_check():
 def keepalive():
     """
     Keep-alive endpoint to prevent resource cleanup during idle time.
-    This lightweight endpoint ensures resources stay in memory.
+    This endpoint makes a lightweight prediction to keep all resources active.
     
     Returns:
         dict: Keep-alive status
     """
-    # Lightweight operation that touches resources without heavy computation
-    from .review_prediction import STOP_WORDS, LEMMATIZER
-    
-    # Just verify resources are accessible (very fast)
-    _ = len(STOP_WORDS)
-    _ = LEMMATIZER.lemmatize("test")
-    
-    return {
-        "status": "alive",
-        "message": "Resources are active"
-    }
+    try:
+        # Make a very lightweight prediction to keep all resources warm
+        # This ensures models, NLP resources, and TextBlob stay in memory
+        from .review_prediction import predict_review
+        _ = predict_review("keepalive check")
+        
+        return {
+            "status": "alive",
+            "message": "Resources are active and warmed"
+        }
+    except Exception as e:
+        return {
+            "status": "alive",
+            "message": f"Keep-alive check completed (warning: {str(e)})"
+        }
 
 
 # API endpoint

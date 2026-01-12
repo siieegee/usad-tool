@@ -55,6 +55,7 @@ image = (
         "ANOMALY_THRESHOLD": "0.54",
     },
     timeout=600,
+    keep_warm=1,  # Keep 1 container warm to prevent cold starts
     # Uncomment if you need GPU:
     # gpu="T4",
 )
