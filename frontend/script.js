@@ -605,10 +605,6 @@ function validateInput(text) {
         return { valid: false, message: "Invalid data entry" };
     }
     
-    if (detectGibberish(text)) {
-        return { valid: false, message: "Invalid data entry" };
-    }
-    
     return { valid: true, message: null };
 }
 

@@ -233,7 +233,7 @@ def detect_gibberish(text):
 
 def validate_input(text):
     """
-    Validate input text for language and gibberish.
+    Validate input text for language.
     
     Args:
         text: Input text string
@@ -253,10 +253,6 @@ def validate_input(text):
     
     # Check for Tagalog
     if detect_tagalog(text):
-        return False, "Invalid data entry"
-    
-    # Check for gibberish
-    if detect_gibberish(text):
         return False, "Invalid data entry"
     
     return True, None
