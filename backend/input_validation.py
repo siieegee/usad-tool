@@ -168,44 +168,6 @@ def detect_gibberish(text):
     if lexical_diversity < 0.4 and len(words) > 2:
         return True
     
-    # Check 6: High repetition of very short "words" (improved with context awareness)
-    # Common English words that are short but legitimate
-    common_english_words = {
-        'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'boy', 'did', 'let', 'put', 'say', 'she', 'too', 'use', 'this', 'that', 'with', 'have', 'from', 'they', 'been', 'than', 'them', 'then', 'when', 'were', 'what', 'will', 'your', 'into', 'just', 'like', 'more', 'only', 'over', 'some', 'such', 'take', 'than', 'them', 'then', 'there', 'these', 'think', 'those', 'three', 'through', 'time', 'very', 'well', 'were', 'what', 'when', 'where', 'which', 'while', 'will', 'with', 'would', 'year', 'your', 'about', 'after', 'again', 'being', 'could', 'every', 'first', 'great', 'might', 'never', 'other', 'shall', 'should', 'still', 'their', 'there', 'these', 'think', 'those', 'three', 'under', 'until', 'where', 'which', 'while', 'would', 'years', 'zoom', 'lens', 'it', 'is', 'an', 'a', 'i', 've', 's', 't1i', 'canon', 'optical', 'impressive', 'impressed', 'bokeh', 'sharpness'
-    }
-    
-    short_words = [w for w in words if len(w) <= 4]
-    if len(short_words) > 0:
-        short_word_ratio = len(short_words) / len(words)
-        
-        # Check if short words are legitimate English words
-        legitimate_short_words = [w for w in short_words if w in common_english_words]
-        legitimate_short_ratio = len(legitimate_short_words) / len(short_words) if len(short_words) > 0 else 0
-        
-        # Count longer meaningful words (6+ characters) as context
-        longer_words = [w for w in words if len(w) >= 6]
-        longer_word_ratio = len(longer_words) / len(words) if len(words) > 0 else 0
-        
-        # More sophisticated check: only flag if:
-        # 1. Very high short word ratio (> 0.8) AND very low diversity (< 0.35) AND most short words are NOT legitimate English words
-        # 2. OR high short word ratio (> 0.75) AND low diversity (< 0.4) AND no longer words AND most short words are NOT legitimate
-        # 3. OR high short word ratio (> 0.7) AND very low diversity (< 0.3) AND most short words are NOT legitimate
-        if short_word_ratio > 0.6 and lexical_diversity < 0.5:
-            # Context check: if most short words are legitimate English words, it's likely valid
-            if legitimate_short_ratio < 0.5:
-                # Most short words are not common English words - could be gibberish
-                # But also check if there are longer meaningful words present
-                if longer_word_ratio < 0.1:
-                    # No longer words and most short words aren't legitimate - likely gibberish
-                    return True
-                # If there are longer words, require stricter thresholds
-                if short_word_ratio > 0.8 and lexical_diversity < 0.35:
-                    return True
-            else:
-                # Most short words are legitimate English words - require much stricter thresholds
-                if short_word_ratio > 0.85 and lexical_diversity < 0.3:
-                    return True
-    
     # Check 7: Check for patterns of random letter sequences
     # Look for words that don't follow English patterns (too many consonants in a row)
     consonant_clusters = 0
