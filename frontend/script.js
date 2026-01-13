@@ -504,10 +504,47 @@ function detectGibberish(text) {
     const diversity = uniqueWords.size / words.length;
     if (diversity < 0.4 && words.length > 2) return true;
     
-    // Check 4: High ratio of short words with low diversity
+    // Check 4: High ratio of short words with low diversity (improved with context awareness)
+    // Common English words that are short but legitimate
+    const commonEnglishWords = new Set([
+        'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'boy', 'did', 'let', 'put', 'say', 'she', 'too', 'use', 'this', 'that', 'with', 'have', 'from', 'they', 'been', 'than', 'them', 'then', 'when', 'were', 'what', 'will', 'your', 'into', 'just', 'like', 'more', 'only', 'over', 'some', 'such', 'take', 'than', 'them', 'then', 'there', 'these', 'think', 'those', 'three', 'through', 'time', 'very', 'well', 'were', 'what', 'when', 'where', 'which', 'while', 'will', 'with', 'would', 'year', 'your', 'about', 'after', 'again', 'being', 'could', 'every', 'first', 'great', 'might', 'never', 'other', 'shall', 'should', 'still', 'their', 'there', 'these', 'think', 'those', 'three', 'under', 'until', 'where', 'which', 'while', 'would', 'years', 'zoom', 'lens', 'it', 'is', 'an', 'a', 'i', 've', 's', 't1i', 'canon', 'optical', 'impressive', 'impressed', 'bokeh', 'sharpness'
+    ]);
+    
     const shortWords = words.filter(w => w.length <= 4);
     const shortRatio = shortWords.length / words.length;
-    if (shortRatio > 0.6 && diversity < 0.5) return true;
+    
+    // Check if short words are legitimate English words
+    const legitimateShortWords = shortWords.filter(w => commonEnglishWords.has(w));
+    const legitimateShortRatio = shortWords.length > 0 ? legitimateShortWords.length / shortWords.length : 0;
+    
+    // Count longer meaningful words (6+ characters) as context
+    const longerWords = words.filter(w => w.length >= 6);
+    const longerWordRatio = longerWords.length / words.length;
+    
+    // More sophisticated check: only flag if:
+    // 1. Very high short word ratio (> 0.8) AND very low diversity (< 0.35) AND most short words are NOT legitimate English words
+    // 2. OR high short word ratio (> 0.75) AND low diversity (< 0.4) AND no longer words AND most short words are NOT legitimate
+    // 3. OR high short word ratio (> 0.7) AND very low diversity (< 0.3) AND most short words are NOT legitimate
+    if (shortRatio > 0.6 && diversity < 0.5) {
+        // Context check: if most short words are legitimate English words, it's likely valid
+        if (legitimateShortRatio < 0.5) {
+            // Most short words are not common English words - could be gibberish
+            // But also check if there are longer meaningful words present
+            if (longerWordRatio < 0.1) {
+                // No longer words and most short words aren't legitimate - likely gibberish
+                return true;
+            }
+            // If there are longer words, require stricter thresholds
+            if (shortRatio > 0.8 && diversity < 0.35) {
+                return true;
+            }
+        } else {
+            // Most short words are legitimate English words - require much stricter thresholds
+            if (shortRatio > 0.85 && diversity < 0.3) {
+                return true;
+            }
+        }
+    }
     
     // Check 5: Unusual consonant clusters (3+ consonants in a row)
     const consonantClusters = words.filter(w => /[bcdfghjklmnpqrstvwxyz]{3,}/i.test(w));
